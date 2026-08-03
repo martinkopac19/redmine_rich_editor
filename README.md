@@ -18,7 +18,8 @@ editor simply doesn't mount and you fall back to the native textarea.
 - **F1 — editing UX (done):** bubble toolbar, `/` slash palette, markdown input rules,
   keyboard shortcuts; blocks: 4 heading levels, bullet / numbered / **task lists**, blockquote,
   code block, **tables**, horizontal rule, links (`Cmd/Ctrl + K`).
-- **F2 (planned):** `@` mentions, `#` issue links, `:` emoji, image/file drag & drop.
+- **F2 (in progress):** `#` issue links + `:` emoji (done); `@` mentions and image/file
+  drag & drop still to come.
 - **F3 (planned):** inline title editing on the issue page, comments bar (Submit), auto-save
   on blur / idle.
 

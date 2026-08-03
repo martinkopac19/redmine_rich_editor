@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- F2 (part 1): **`#issue` autocomplete** — type `#` + text to search issues (via the
+  command_palette search endpoint) and insert `#<id>`; **emoji `:` picker** — type `:name`
+  to insert a Unicode emoji. Both insert plain text/Unicode that round-trips through Markdown
+  (Redmine turns `#123` into a link on render). Still to come: `@mention`, image/file upload.
+- Fix: give each suggestion (`/`, `#`, `:`) a **unique ProseMirror PluginKey** — they shared
+  the default key and collided (`RangeError: Adding different instances of a keyed plugin`),
+  which broke the whole editor mount. Also: a failed mount no longer retries in a loop.
+
 ## 0.2.2
 
 - Fix: editor content was indented ~180px because Redmine's tabular form CSS

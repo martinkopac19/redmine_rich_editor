@@ -1,6 +1,7 @@
 /* Slash `/` paleta blokov — Linear-style. Vlastný popup (bez tippy). */
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
+import { PluginKey } from '@tiptap/pm/state';
 
 var RE_I18N = (window.RE_CONFIG || {}).i18n || {};
 
@@ -83,6 +84,7 @@ export var SlashCommand = Extension.create({
     return [
       Suggestion({
         editor: this.editor,
+        pluginKey: new PluginKey('reSlash'),
         char: '/',
         allowSpaces: false,
         startOfLine: false,

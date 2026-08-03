@@ -12,6 +12,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { SlashCommand } from './slash.js';
+import { IssueSuggest, EmojiSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
 
 var CFG = window.RE_CONFIG || {};
@@ -39,6 +40,8 @@ function extensions() {
     TableRow, TableHeader, TableCell,
     Placeholder.configure({ placeholder: I.placeholder || 'Write…  ("/" for blocks)' }),
     SlashCommand,
+    IssueSuggest,
+    EmojiSuggest,
     LinkShortcut,
     Markdown.configure({ html: false, linkify: false, breaks: false, transformPastedText: true })
   ];
@@ -84,15 +87,17 @@ function mountOver(textarea) {
       }
     });
 
-    attachBubble(editor);
     textarea._reEditor = editor;
 
     // Re-sync, keď textareu naplní niekto zvonku (napr. vloženie šablóny).
     textarea.addEventListener('re:resync', function () {
       editor.commands.setContent(textarea.value || '');
     });
+    attachBubble(editor);
   } catch (e) {
-    textarea.dataset.reMounted = '';
+    // NEopakovať mount pri zlyhaní (inak observer spustí storm) → natívny fallback
+    textarea.dataset.reMounted = 'failed';
+    if (wrapper && wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
     if (block) block.style.display = ''; else textarea.style.display = '';
     if (window.console) console.error('[rich_editor] mount failed, using native textarea:', e);
   }
