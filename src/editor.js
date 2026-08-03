@@ -16,6 +16,7 @@ import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
 import { handleFiles, openFilePicker } from './attachments.js';
+import { liveDescription } from './live.js';
 
 var CFG = window.RE_CONFIG || {};
 var I = CFG.i18n || {};
@@ -113,6 +114,11 @@ function mountOver(textarea) {
       editor.commands.setContent(textarea.value || '');
     });
     attachBubble(editor);
+
+    // F3: na detaile issue urob popis "live" (editor nahradí rendered popis + auto-save)
+    if (textarea.id === 'issue_description' && document.getElementById('issue_description_wiki')) {
+      try { liveDescription(editor, textarea); } catch (e) {}
+    }
   } catch (e) {
     // NEopakovať mount pri zlyhaní (inak observer spustí storm) → natívny fallback
     textarea.dataset.reMounted = 'failed';

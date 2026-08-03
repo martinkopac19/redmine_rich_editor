@@ -70,6 +70,12 @@
 .re-bubble-btn:hover { background: rgba(255,255,255,0.15); }
 .re-bubble-btn.re-on { background: var(--previo-primary, #B50000); }
 
+/* F3 auto-save indikátor */
+.re-save-ind { font-size: 0.72rem; margin-top: 4px; min-height: 1em; color: var(--previo-grey400, #b2b2b2); }
+.re-save-ind.re-saving { color: var(--previo-grey400, #b2b2b2); }
+.re-save-ind.re-saved { color: var(--previo-positive, #1B6422); }
+.re-save-ind.re-error { color: var(--previo-negative, #A30000); }
+
 /* slash paleta */
 .re-slash {
   position: absolute; z-index: 100001; min-width: 200px; max-height: 280px; overflow-y: auto;

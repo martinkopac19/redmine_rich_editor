@@ -20,8 +20,8 @@ editor simply doesn't mount and you fall back to the native textarea.
   code block, **tables**, horizontal rule, links (`Cmd/Ctrl + K`).
 - **F2 (done):** `#` issue links, `:` emoji, `@` mentions, and image/file upload
   (drag & drop, paste, `Cmd/Ctrl + Shift + A`, `/file`).
-- **F3 (planned):** inline title editing on the issue page, comments bar (Submit), auto-save
-  on blur / idle.
+- **F3 (in progress):** live description with auto-save on blur/idle (done); inline title
+  editing and an always-visible comments bar are next.
 
 ## Scope
 

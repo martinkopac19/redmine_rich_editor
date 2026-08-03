@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+- F3 (part 1) — **live description**: on the issue page the description is now the rich editor
+  itself (it replaces the read-only render) and edits **auto-save on blur / idle** via AJAX to
+  Redmine's own update — one journal per editing session, `lock_version` handled. A small
+  Saving… / Saved indicator shows status. This is the most DOM-coupled part; on any failure it
+  degrades gracefully (the value stays in the field and the native Edit → Save still works).
+- Note: this moves the editor into the description area, so `#123` / `@name` show as plain
+  text while editing (Redmine renders them as links on save). Title & comments: next.
+
 ## 0.5.1
 
 - Fix: **pasted / uploaded images now preview immediately** in the editor. The image node uses
