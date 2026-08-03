@@ -9,7 +9,7 @@ Redmine::Plugin.register :redmine_rich_editor do
   author 'Martin Kopáč'
   description 'Linear-style inline WYSIWYG editor for issue title, description and comments. ' \
               'Text-area backed, round-trips to Markdown, preserves journals and permissions.'
-  version '0.2.1'
+  version '0.2.2'
   url 'https://github.com/martinkopac19/redmine_rich_editor'
   requires_redmine version_or_higher: '6.0'
 

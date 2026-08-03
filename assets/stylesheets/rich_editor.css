@@ -9,6 +9,13 @@
 .re-editor .ProseMirror { outline: none; min-height: 120px; line-height: 1.5; }
 .re-editor .ProseMirror:focus { outline: none; }
 .re-editor .ProseMirror > *:first-child { margin-top: 0; }
+/* reset presakujúceho Redmine formulárového CSS (.tabular p { padding-left:180px } a pod.) */
+.re-editor .ProseMirror p,
+.re-editor .ProseMirror h1, .re-editor .ProseMirror h2,
+.re-editor .ProseMirror h3, .re-editor .ProseMirror h4,
+.re-editor .ProseMirror blockquote,
+.re-editor .ProseMirror pre,
+.re-editor .ProseMirror ul, .re-editor .ProseMirror ol { padding-left: 0; }
 .re-editor .ProseMirror p { margin: 0 0 8px; }
 .re-editor .ProseMirror h1 { font-size: 1.6em; margin: 12px 0 6px; }
 .re-editor .ProseMirror h2 { font-size: 1.4em; margin: 12px 0 6px; }

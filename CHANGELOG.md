@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+- Fix: editor content was indented ~180px because Redmine's tabular form CSS
+  (`.tabular p { padding-left: 180px }`) bled into the ProseMirror paragraphs. The editor
+  now resets that padding on its own text blocks; content is left-aligned again.
+
 ## 0.2.1
 
 - Fix: hide the **whole** native jsToolBar widget (Edit/Preview tabs + toolbar), not just the
