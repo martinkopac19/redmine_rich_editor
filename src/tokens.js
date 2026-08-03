@@ -8,6 +8,11 @@ import { EMOJI } from './emoji-data.js';
 var CFG = window.RE_CONFIG || {};
 var base = CFG.base || '';
 
+// prvé návrhy hneď po `:` (najpoužívanejšie v práci)
+var EMOJI_DEFAULTS = ['thumbsup', 'check', 'fire', 'rocket', 'tada', 'heart', 'eyes', 'pray']
+  .map(function (n) { return EMOJI.filter(function (e) { return e.n === n; })[0]; })
+  .filter(Boolean);
+
 // Zdieľaný popup renderer pre suggestion (rovnaký vzhľad ako slash paleta).
 function makePopup(labelFn, emptyText) {
   var box, items = [], sel = 0, cmd = null;
@@ -99,9 +104,15 @@ export var EmojiSuggest = Extension.create({
       char: ':',
       allowSpaces: false,
       startOfLine: false,
+      allow: function (props) {
+        // spusti len keď `:` začína slovo (po medzere/na začiatku) → neruší "12:30", "note:"
+        var from = props.range.from;
+        var before = from > 0 ? props.state.doc.textBetween(from - 1, from, '\n', '') : '';
+        return before === '' || /\s/.test(before);
+      },
       items: function (props) {
         var q = (props.query || '').toLowerCase();
-        if (q.length < 2) return [];
+        if (!q) return EMOJI_DEFAULTS; // hneď po `:` ukáž prvé návrhy
         return EMOJI.filter(function (e) {
           return e.n.indexOf(q) >= 0 || (e.k && e.k.indexOf(q) >= 0);
         }).slice(0, 8);

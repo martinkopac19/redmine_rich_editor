@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Fix: the emoji `:` menu now shows suggestions **immediately** after `:` (previously it said
+  "No emoji" until you typed 2 characters, which looked like a bug). It only triggers when `:`
+  starts a word, so it no longer interferes with text like `12:30` or `note:`.
+
 ## 0.3.0
 
 - F2 (part 1): **`#issue` autocomplete** — type `#` + text to search issues (via the
