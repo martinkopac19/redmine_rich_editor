@@ -14,6 +14,9 @@ import TableCell from '@tiptap/extension-table-cell';
 import { SlashCommand } from './slash.js';
 import { attachBubble, promptLink } from './bubble.js';
 
+var CFG = window.RE_CONFIG || {};
+var I = CFG.i18n || {};
+
 // Ktoré textarey preberáme (dlhodobo stabilné Redmine id-čka).
 var SELECTOR = 'textarea#issue_description, textarea#issue_notes';
 
@@ -34,22 +37,42 @@ function extensions() {
     TaskItem.configure({ nested: true }),
     Table.configure({ resizable: false }),
     TableRow, TableHeader, TableCell,
-    Placeholder.configure({ placeholder: 'Píš… („/" pre bloky)' }),
+    Placeholder.configure({ placeholder: I.placeholder || 'Write…  ("/" for blocks)' }),
     SlashCommand,
     LinkShortcut,
     Markdown.configure({ html: false, linkify: false, breaks: false, transformPastedText: true })
   ];
 }
 
+function nativeBlock(ta) { return ta.closest('.jstBlock'); }
+
 function mountOver(textarea) {
-  if (textarea.dataset.reMounted) return;
+  // už namountované → len zabezpeč, že natívny widget ostáva skrytý
+  if (textarea.dataset.reMounted) {
+    var b0 = nativeBlock(textarea);
+    if (b0) b0.style.display = 'none';
+    return;
+  }
+  // Počkaj, kým Redmine jsToolBar vytvorí .jstBlock (tabs Edit/Preview + toolbar),
+  // aby sme vedeli skryť CELÝ natívny widget, nie len textareu. Observer nás zavolá znova;
+  // ak do 1,5 s .jstBlock nepríde, mountneme na holú textareu (fallback).
+  var block = nativeBlock(textarea);
+  if (!block) {
+    if (!textarea.dataset.reWait) {
+      textarea.dataset.reWait = '1';
+      setTimeout(function () { textarea.dataset.reForce = '1'; scan(); }, 1500);
+    }
+    if (!textarea.dataset.reForce) return;
+  }
   try {
     textarea.dataset.reMounted = '1';
+    var anchor = block || textarea;
 
     var wrapper = document.createElement('div');
     wrapper.className = 're-editor';
-    textarea.parentNode.insertBefore(wrapper, textarea);
-    textarea.style.display = 'none';
+    anchor.parentNode.insertBefore(wrapper, anchor.nextSibling);
+    // skry celý natívny widget; textarea (vnútri) ostáva ako "source of truth" pre uloženie
+    if (block) block.style.display = 'none'; else textarea.style.display = 'none';
 
     var editor = new Editor({
       element: wrapper,
@@ -70,7 +93,7 @@ function mountOver(textarea) {
     });
   } catch (e) {
     textarea.dataset.reMounted = '';
-    textarea.style.display = '';
+    if (block) block.style.display = ''; else textarea.style.display = '';
     if (window.console) console.error('[rich_editor] mount failed, using native textarea:', e);
   }
 }

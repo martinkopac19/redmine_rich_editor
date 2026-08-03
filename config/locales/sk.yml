@@ -1,3 +1,6 @@
 sk:
   re_setting_enabled: "Zapnúť rich editor"
   re_setting_enabled_hint: "Zapne/vypne inline editor v štýle Linear. Keď je vypnutý, použije sa natívny textarea editor."
+  re_ph: "Píš…  („/\" pre bloky)"
+  re_link_prompt: "Odkaz (URL):"
+  re_no_blocks: "Žiadne bloky"

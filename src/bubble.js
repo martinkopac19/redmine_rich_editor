@@ -1,8 +1,9 @@
 /* Bublinová lišta po označení textu (bold/italic/strike/code/link). Vlastná, bez tippy. */
+var RE_I18N = (window.RE_CONFIG || {}).i18n || {};
 
 export function promptLink(editor) {
   var prev = editor.getAttributes('link').href || '';
-  var url = window.prompt('Odkaz (URL):', prev);
+  var url = window.prompt(RE_I18N.link || 'Link (URL):', prev);
   if (url === null) return;
   if (url.trim() === '') { editor.chain().focus().extendMarkRange('link').unsetLink().run(); return; }
   editor.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();

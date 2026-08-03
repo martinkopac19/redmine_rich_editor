@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Fix: hide the **whole** native jsToolBar widget (Edit/Preview tabs + toolbar), not just the
+  textarea — previously the native editor and the rich editor were stacked. The editor now
+  waits for jsToolBar to build `.jstBlock`, then replaces it (native fallback preserved).
+- Fix: editor UI strings (placeholder, link prompt, empty slash menu) now follow the user's
+  Redmine language via `RE_CONFIG` (they were hardcoded in Slovak).
+
 ## 0.2.0
 
 - Editing UX (F1): selection **bubble toolbar** (bold / italic / strike / inline code / link),

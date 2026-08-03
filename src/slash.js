@@ -2,6 +2,8 @@
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 
+var RE_I18N = (window.RE_CONFIG || {}).i18n || {};
+
 var ITEMS = [
   { title: 'Heading 1', kw: 'h1 nadpis heading', run: function (c) { return c.setNode('heading', { level: 1 }); } },
   { title: 'Heading 2', kw: 'h2 nadpis heading', run: function (c) { return c.setNode('heading', { level: 2 }); } },
@@ -31,7 +33,7 @@ function makeRenderer() {
   function paint() {
     box.innerHTML = '';
     if (!items.length) {
-      var e = document.createElement('div'); e.className = 're-slash-empty'; e.textContent = 'No blocks';
+      var e = document.createElement('div'); e.className = 're-slash-empty'; e.textContent = RE_I18N.noBlocks || 'No blocks';
       box.appendChild(e); return;
     }
     items.forEach(function (it, i) {

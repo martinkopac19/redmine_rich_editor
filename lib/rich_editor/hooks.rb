@@ -7,7 +7,12 @@ module RichEditor
 
       cfg = {
         base: Redmine::Utils.relative_url_root.to_s,
-        meId: User.current.id
+        meId: User.current.id,
+        i18n: {
+          placeholder: ::I18n.t(:re_ph),
+          link: ::I18n.t(:re_link_prompt),
+          noBlocks: ::I18n.t(:re_no_blocks)
+        }
       }
       out = +''
       out << stylesheet_link_tag('rich_editor', plugin: 'redmine_rich_editor')
