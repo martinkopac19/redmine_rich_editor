@@ -2,6 +2,7 @@
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import { PluginKey } from '@tiptap/pm/state';
+import { openFilePicker } from './attachments.js';
 
 var RE_I18N = (window.RE_CONFIG || {}).i18n || {};
 
@@ -16,7 +17,8 @@ var ITEMS = [
   { title: 'Quote', kw: 'blockquote citacia quote', run: function (c) { return c.toggleBlockquote(); } },
   { title: 'Code block', kw: 'code kod pre', run: function (c) { return c.toggleCodeBlock(); } },
   { title: 'Table', kw: 'table tabulka', run: function (c) { return c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }); } },
-  { title: 'Divider', kw: 'hr divider oddelovac ruler line', run: function (c) { return c.setHorizontalRule(); } }
+  { title: 'Divider', kw: 'hr divider oddelovac ruler line', run: function (c) { return c.setHorizontalRule(); } },
+  { title: 'Image / file', kw: 'file image insert attach obrazok subor priloha upload', openFile: true }
 ];
 
 function filterItems(query) {
@@ -92,6 +94,7 @@ export var SlashCommand = Extension.create({
         command: function (props) {
           // props.props = vybraný item; zmaž "/query" a spusti akciu
           var chain = props.editor.chain().focus().deleteRange(props.range);
+          if (props.props.openFile) { chain.run(); openFilePicker(props.editor); return; }
           props.props.run(chain).run();
         },
         render: makeRenderer

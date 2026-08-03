@@ -32,6 +32,8 @@
 }
 .re-editor .ProseMirror code { font-family: monospace; }
 .re-editor .ProseMirror hr { border: none; border-top: 2px solid var(--previo-grey200, #e5e5e5); margin: 12px 0; }
+.re-editor .ProseMirror img { max-width: 100%; height: auto; border-radius: 4px; }
+.re-editor .ProseMirror img.ProseMirror-selectednode { outline: 2px solid var(--previo-primary, #B50000); }
 
 /* placeholder (prázdny prvý riadok) */
 .re-editor .ProseMirror p.is-editor-empty:first-child::before {

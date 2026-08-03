@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+- F2 complete — **images & files**: drag & drop, paste, `Cmd/Ctrl + Shift + A`, and the `/file`
+  slash command. Files upload through Redmine's in-session `/uploads.js` (the `.json` variant
+  needs the REST API, which returns 401 here), are linked to the issue form via hidden
+  `attachments[]` fields, and inserted as `![](filename)` (images) or a link (other files) —
+  so the attachment is saved and rendered by Redmine on the issue.
+- Note: in-editor image preview is basic (staged uploads have no public URL yet, so the
+  thumbnail shows the filename); the image renders correctly once the issue is saved.
+
 ## 0.4.0
 
 - F2 (part 2a): **`@mention`** — type `@` to search the project's members (new read-only

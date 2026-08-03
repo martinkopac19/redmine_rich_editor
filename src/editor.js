@@ -11,9 +11,11 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import Image from '@tiptap/extension-image';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
+import { handleFiles, openFilePicker } from './attachments.js';
 
 var CFG = window.RE_CONFIG || {};
 var I = CFG.i18n || {};
@@ -26,7 +28,10 @@ var LinkShortcut = Extension.create({
   name: 'reLinkShortcut',
   addKeyboardShortcuts: function () {
     var self = this;
-    return { 'Mod-k': function () { promptLink(self.editor); return true; } };
+    return {
+      'Mod-k': function () { promptLink(self.editor); return true; },
+      'Mod-Shift-a': function () { openFilePicker(self.editor); return true; }
+    };
   }
 });
 
@@ -38,6 +43,7 @@ function extensions() {
     TaskItem.configure({ nested: true }),
     Table.configure({ resizable: false }),
     TableRow, TableHeader, TableCell,
+    Image.configure({ inline: true }),
     Placeholder.configure({ placeholder: I.placeholder || 'Write…  ("/" for blocks)' }),
     SlashCommand,
     IssueSuggest,
@@ -82,6 +88,18 @@ function mountOver(textarea) {
       element: wrapper,
       extensions: extensions(),
       content: textarea.value || '',
+      editorProps: {
+        handlePaste: function (view, event) {
+          var files = event.clipboardData && event.clipboardData.files;
+          if (files && files.length) { handleFiles(editor, files); return true; }
+          return false;
+        },
+        handleDrop: function (view, event) {
+          var files = event.dataTransfer && event.dataTransfer.files;
+          if (files && files.length) { event.preventDefault(); handleFiles(editor, files); return true; }
+          return false;
+        }
+      },
       onUpdate: function (props) {
         textarea.value = props.editor.storage.markdown.getMarkdown();
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
