@@ -16,7 +16,7 @@ import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
 import { handleFiles, openFilePicker } from './attachments.js';
-import { liveDescription } from './live.js';
+import { liveDescription, liveTitle } from './live.js';
 
 var CFG = window.RE_CONFIG || {};
 var I = CFG.i18n || {};
@@ -143,6 +143,7 @@ function scheduleScan() {
 
 function init() {
   scan();
+  try { if (document.getElementById('issue-form')) liveTitle(); } catch (e) {}
   try {
     var mo = new MutationObserver(scheduleScan);
     mo.observe(document.body || document.documentElement, { childList: true, subtree: true });

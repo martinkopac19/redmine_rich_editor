@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- F3 (part 2) — **inline title**: the issue subject is editable in place (click the title,
+  type, `Enter` or click away to save) and auto-saves on blur/idle. Shown only when you can
+  edit the issue. Comments bar next.
+
 ## 0.6.0
 
 - F3 (part 1) — **live description**: on the issue page the description is now the rich editor

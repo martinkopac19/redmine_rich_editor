@@ -64,6 +64,28 @@ function autosaver(getFields, ind) {
   };
 }
 
+// LIVE NÁZOV: subject (.subject h3) urob inline editovateľný (contenteditable) + auto-save.
+export function liveTitle() {
+  if (!issueForm()) return; // formulár existuje len ak má user právo editovať
+  var subject = document.querySelector('.subject[data-sticky-issue-header-target="original"]') ||
+    document.querySelector('.subject');
+  var el = subject && subject.querySelector('h3');
+  if (!el || el.dataset.reTitle) return;
+  el.dataset.reTitle = '1';
+  el.setAttribute('contenteditable', 'true');
+  el.setAttribute('spellcheck', 'false');
+  el.classList.add('re-title-edit');
+
+  var ind = makeIndicator(subject);
+  var saver = autosaver(function () { return { subject: el.textContent.replace(/\s+/g, ' ').trim() }; }, ind);
+  el.addEventListener('input', function () { saver.idle(); });
+  el.addEventListener('focus', function () { saver.onFocus(); });
+  el.addEventListener('blur', function () { saver.onBlur(); });
+  el.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  });
+}
+
 // LIVE POPIS: editor (rich) presuň na miesto renderovaného popisu, schovaj rendered, auto-save.
 export function liveDescription(editor, textarea) {
   var wiki = document.getElementById('issue_description_wiki');
