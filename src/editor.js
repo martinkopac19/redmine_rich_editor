@@ -12,7 +12,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { SlashCommand } from './slash.js';
-import { IssueSuggest, EmojiSuggest } from './tokens.js';
+import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
 
 var CFG = window.RE_CONFIG || {};
@@ -42,6 +42,7 @@ function extensions() {
     SlashCommand,
     IssueSuggest,
     EmojiSuggest,
+    MentionSuggest,
     LinkShortcut,
     Markdown.configure({ html: false, linkify: false, breaks: false, transformPastedText: true })
   ];

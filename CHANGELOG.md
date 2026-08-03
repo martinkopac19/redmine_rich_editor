@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- F2 (part 2a): **`@mention`** — type `@` to search the project's members (new read-only
+  `rich_editor/mentionables` endpoint) and insert `@login`. Redmine turns it into a user link
+  and notifies the mentioned person on save. Only triggers at the start of a word, so it
+  doesn't fire inside email addresses.
+- Adds a tiny `RichEditorController#mentionables` (login-gated) + route, and `projectId` to
+  `RE_CONFIG`. Still upgrade-safe: no core patch, no migrations.
+
 ## 0.3.1
 
 - Fix: the emoji `:` menu now shows suggestions **immediately** after `:` (previously it said

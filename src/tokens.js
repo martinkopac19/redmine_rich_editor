@@ -13,6 +13,13 @@ var EMOJI_DEFAULTS = ['thumbsup', 'check', 'fire', 'rocket', 'tada', 'heart', 'e
   .map(function (n) { return EMOJI.filter(function (e) { return e.n === n; })[0]; })
   .filter(Boolean);
 
+// `@`/`:` sa spustí len keď začína slovo (po medzere/na začiatku) → neruší email / 12:30
+function wordStartAllow(props) {
+  var from = props.range.from;
+  var before = from > 0 ? props.state.doc.textBetween(from - 1, from, '\n', '') : '';
+  return before === '' || /\s/.test(before);
+}
+
 // Zdieľaný popup renderer pre suggestion (rovnaký vzhľad ako slash paleta).
 function makePopup(labelFn, emptyText) {
   var box, items = [], sel = 0, cmd = null;
@@ -104,12 +111,7 @@ export var EmojiSuggest = Extension.create({
       char: ':',
       allowSpaces: false,
       startOfLine: false,
-      allow: function (props) {
-        // spusti len keď `:` začína slovo (po medzere/na začiatku) → neruší "12:30", "note:"
-        var from = props.range.from;
-        var before = from > 0 ? props.state.doc.textBetween(from - 1, from, '\n', '') : '';
-        return before === '' || /\s/.test(before);
-      },
+      allow: wordStartAllow,
       items: function (props) {
         var q = (props.query || '').toLowerCase();
         if (!q) return EMOJI_DEFAULTS; // hneď po `:` ukáž prvé návrhy
@@ -121,6 +123,35 @@ export var EmojiSuggest = Extension.create({
         props.editor.chain().focus().deleteRange(props.range).insertContent(props.props.c + ' ').run();
       },
       render: function () { return makePopup(function (it) { return it.c + '   ' + it.n; }, 'No emoji'); }
+    })];
+  }
+});
+
+// @mention — členovia projektu cez vlastný endpoint; vloží `@login` (Redmine natívne notifikuje).
+export var MentionSuggest = Extension.create({
+  name: 'reMentionSuggest',
+  addProseMirrorPlugins: function () {
+    return [Suggestion({
+      editor: this.editor,
+      pluginKey: new PluginKey('reMention'),
+      char: '@',
+      allowSpaces: false,
+      startOfLine: false,
+      allow: wordStartAllow,
+      items: function (props) {
+        var url = base + '/rich_editor/mentionables?q=' + encodeURIComponent(props.query || '') +
+          (CFG.projectId ? '&project_id=' + CFG.projectId : '');
+        return fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        }).then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (list) { return (list || []).slice(0, 8); })
+          .catch(function () { return []; });
+      },
+      command: function (props) {
+        props.editor.chain().focus().deleteRange(props.range).insertContent('@' + props.props.login + ' ').run();
+      },
+      render: function () { return makePopup(function (it) { return it.name + '   (@' + it.login + ')'; }, 'No people'); }
     })];
   }
 });

@@ -5,9 +5,13 @@ module RichEditor
     def view_layouts_base_html_head(context = {})
       return '' unless enabled?
 
+      project = context[:project]
+      issue = safe_current_issue(context)
+      eff_project = (project && project.persisted? ? project : (issue ? issue.project : nil))
       cfg = {
         base: Redmine::Utils.relative_url_root.to_s,
         meId: User.current.id,
+        projectId: (eff_project ? eff_project.id : nil),
         i18n: {
           placeholder: ::I18n.t(:re_ph),
           link: ::I18n.t(:re_link_prompt),
@@ -27,6 +31,14 @@ module RichEditor
     end
 
     private
+
+    def safe_current_issue(context)
+      c = context[:controller]
+      iss = c && c.instance_variable_get(:@issue)
+      iss.is_a?(Issue) && iss.persisted? ? iss : nil
+    rescue StandardError
+      nil
+    end
 
     def enabled?
       return false unless User.current.logged?
