@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.1
+
+- Fix: **pasted / uploaded images now preview immediately** in the editor. The image node uses
+  a local blob URL for display (`src`) but keeps the real filename in a `filename` attribute
+  and serialises Markdown as `![](filename)` — so the preview is instant and the saved issue
+  still renders the attachment. (Previously `src` was the bare filename → broken thumbnail /
+  404 until the issue was saved.) Existing images loaded from Markdown still show a plain
+  thumbnail until saved — separate follow-up.
+
 ## 0.5.0
 
 - F2 complete — **images & files**: drag & drop, paste, `Cmd/Ctrl + Shift + A`, and the `/file`

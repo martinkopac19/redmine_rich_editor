@@ -49,9 +49,14 @@ function addFormFields(form, att) {
 }
 
 // Vloženie referencie do editora (image node pre obrázky, odkaz pre ostatné).
-function insertRef(editor, att) {
+// Pre obrázok: src = blob URL (okamžitý náhľad), filename = reálny názov (ide do Markdownu).
+function insertRef(editor, att, file) {
   if (isImage(att)) {
-    editor.chain().focus().setImage({ src: att.filename, alt: att.filename }).run();
+    var src = att.filename;
+    try { if (file) src = URL.createObjectURL(file); } catch (e) {}
+    editor.chain().focus()
+      .insertContent({ type: 'image', attrs: { src: src, filename: att.filename, alt: att.filename } })
+      .run();
     editor.chain().focus().insertContent(' ').run();
   } else {
     editor.chain().focus()
@@ -67,7 +72,7 @@ export function handleFiles(editor, files) {
   Array.prototype.forEach.call(files, function (file) {
     uploadFile(file).then(function (att) {
       addFormFields(form, att);
-      insertRef(editor, att);
+      insertRef(editor, att, file);
     }).catch(function (e) {
       if (window.console) console.error('[rich_editor] upload failed:', e);
     });

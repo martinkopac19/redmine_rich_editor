@@ -11,7 +11,7 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
-import Image from '@tiptap/extension-image';
+import { ReImage } from './image.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
@@ -43,7 +43,7 @@ function extensions() {
     TaskItem.configure({ nested: true }),
     Table.configure({ resizable: false }),
     TableRow, TableHeader, TableCell,
-    Image.configure({ inline: true }),
+    ReImage.configure({ inline: true }),
     Placeholder.configure({ placeholder: I.placeholder || 'Write…  ("/" for blocks)' }),
     SlashCommand,
     IssueSuggest,
