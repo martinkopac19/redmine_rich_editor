@@ -15,7 +15,9 @@ module RichEditor
         i18n: {
           placeholder: ::I18n.t(:re_ph),
           link: ::I18n.t(:re_link_prompt),
-          noBlocks: ::I18n.t(:re_no_blocks)
+          noBlocks: ::I18n.t(:re_no_blocks),
+          addComment: ::I18n.t(:re_add_comment),
+          submit: ::I18n.t(:re_submit)
         }
       }
       out = +''

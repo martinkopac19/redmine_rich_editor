@@ -4,3 +4,5 @@ sk:
   re_ph: "Píš…  („/\" pre bloky)"
   re_link_prompt: "Odkaz (URL):"
   re_no_blocks: "Žiadne bloky"
+  re_add_comment: "Pridať komentár"
+  re_submit: "Odoslať"

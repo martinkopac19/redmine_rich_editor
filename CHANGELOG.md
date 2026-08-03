@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0
+
+- F3 complete — **always-visible comments**: a rich-editor comment bar with a **Submit** button
+  sits under the issue history (shown only if you can add notes). Submitting posts the note
+  (via Redmine's own update) and refreshes so the comment appears.
+- Auto-save (description) and comment Submit now also **attach pending drag&drop / paste
+  uploads** (the `attachments[]` tokens are included in the save and cleared afterwards).
+- With this, the planned F0–F3 scope is done: inline rich editor for title, description and
+  comments, textarea-backed and upgrade-safe.
+
 ## 0.6.1
 
 - F3 (part 2) — **inline title**: the issue subject is editable in place (click the title,

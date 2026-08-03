@@ -18,6 +18,9 @@ export function autosave(fields) {
   body.append('authenticity_token', csrf());
   if (lvEl) body.append('issue[lock_version]', lvEl.value);
   Object.keys(fields).forEach(function (k) { body.append('issue[' + k + ']', fields[k] == null ? '' : fields[k]); });
+  // čakajúce prílohy (drag&drop/paste) → priloží ich pri tomto uložení
+  var attInputs = Array.prototype.slice.call(form.querySelectorAll('input[name^="attachments["]'));
+  attInputs.forEach(function (inp) { body.append(inp.name, inp.value); });
   return fetch(action, {
     method: 'POST', credentials: 'same-origin',
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -29,6 +32,8 @@ export function autosave(fields) {
     var m = res.text.match(/name="issue\[lock_version\]"[^>]*value="(\d+)"/);
     if (m && lvEl) lvEl.value = m[1];
     res.success = res.ok && !/id="errorExplanation"/.test(res.text);
+    // úspešne priložené tokeny odstráň, nech sa pri ďalšom uložení neposielajú znova
+    if (res.success) attInputs.forEach(function (inp) { if (inp.parentNode) inp.parentNode.removeChild(inp); });
     return res;
   });
 }
@@ -101,4 +106,39 @@ export function liveDescription(editor, textarea) {
   editor.on('update', function () { saver.idle(); });
   editor.on('blur', function () { saver.onBlur(); });
   editor.on('focus', function () { saver.onFocus(); });
+}
+
+// LIVE KOMENTÁRE: notes editor presuň pod históriu ako vždy viditeľnú lištu + Submit tlačidlo.
+export function liveComments(editor, textarea) {
+  var wrapper = editor.options && editor.options.element;
+  var host = document.getElementById('history');
+  if (!wrapper || !host) return;
+  var i18n = (window.RE_CONFIG || {}).i18n || {};
+  try {
+    var box = document.createElement('div');
+    box.className = 're-comment-box';
+    var label = document.createElement('div');
+    label.className = 're-comment-label';
+    label.textContent = i18n.addComment || 'Add a comment';
+    box.appendChild(label);
+    host.parentNode.insertBefore(box, host.nextSibling);
+    box.appendChild(wrapper); // presuň rich editor do viditeľnej lišty
+  } catch (e) { return; }
+
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 're-comment-submit';
+  btn.textContent = i18n.submit || 'Submit';
+  box.appendChild(btn);
+  var ind = makeIndicator(box);
+
+  btn.addEventListener('click', function () {
+    var val = (textarea.value || '').trim();
+    if (!val) return;
+    btn.disabled = true; ind.saving();
+    autosave({ notes: val }).then(function (res) {
+      if (res.success) { window.location.reload(); }
+      else { btn.disabled = false; ind.failed(); }
+    }).catch(function () { btn.disabled = false; ind.failed(); });
+  });
 }
