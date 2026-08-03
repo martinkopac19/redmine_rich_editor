@@ -1,4 +1,4 @@
-/* Redmine Rich Editor (Previo) — základný vzhľad (F0; rozšíri sa v F1). */
+/* Redmine Rich Editor (Previo) — F1 vzhľad. */
 .re-editor {
   border: 1px solid var(--previo-grey300, #ccc);
   border-radius: var(--previo-radius, 8px);
@@ -6,21 +6,67 @@
   background: #fff;
   font-family: "Inter", "Noto Sans", sans-serif;
 }
-.re-editor .ProseMirror {
-  outline: none;
-  min-height: 120px;
-  line-height: 1.5;
-}
+.re-editor .ProseMirror { outline: none; min-height: 120px; line-height: 1.5; }
 .re-editor .ProseMirror:focus { outline: none; }
 .re-editor .ProseMirror > *:first-child { margin-top: 0; }
 .re-editor .ProseMirror p { margin: 0 0 8px; }
-.re-editor .ProseMirror ul,
-.re-editor .ProseMirror ol { padding-left: 1.4em; margin: 0 0 8px; }
+.re-editor .ProseMirror h1 { font-size: 1.6em; margin: 12px 0 6px; }
+.re-editor .ProseMirror h2 { font-size: 1.4em; margin: 12px 0 6px; }
+.re-editor .ProseMirror h3 { font-size: 1.2em; margin: 10px 0 5px; }
+.re-editor .ProseMirror h4 { font-size: 1.05em; margin: 10px 0 5px; }
+.re-editor .ProseMirror ul, .re-editor .ProseMirror ol { padding-left: 1.4em; margin: 0 0 8px; }
 .re-editor .ProseMirror blockquote {
   border-left: 3px solid var(--previo-grey300, #ccc);
   margin: 0 0 8px; padding-left: 10px; color: var(--previo-grey500, #515151);
 }
 .re-editor .ProseMirror pre {
   background: #f6f7f9; border-radius: 6px; padding: 10px 12px; overflow-x: auto;
+  font-family: monospace; margin: 0 0 8px;
 }
 .re-editor .ProseMirror code { font-family: monospace; }
+.re-editor .ProseMirror hr { border: none; border-top: 2px solid var(--previo-grey200, #e5e5e5); margin: 12px 0; }
+
+/* placeholder (prázdny prvý riadok) */
+.re-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--previo-grey400, #b2b2b2);
+  float: left; height: 0; pointer-events: none;
+}
+
+/* checklisty (task list) */
+.re-editor ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
+.re-editor ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 6px; }
+.re-editor ul[data-type="taskList"] li > label { margin-top: 2px; }
+.re-editor ul[data-type="taskList"] li > div { flex: 1; }
+
+/* tabuľky */
+.re-editor .ProseMirror table { border-collapse: collapse; width: 100%; margin: 0 0 8px; }
+.re-editor .ProseMirror th, .re-editor .ProseMirror td {
+  border: 1px solid var(--previo-grey300, #ccc); padding: 4px 8px; text-align: left; vertical-align: top;
+}
+.re-editor .ProseMirror th { background: var(--previo-grey100, #f2f2f2); font-weight: 600; }
+
+/* bublinová lišta */
+.re-bubble {
+  position: absolute; z-index: 100001; display: flex; gap: 2px;
+  background: #202124; border-radius: 8px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.re-bubble-btn {
+  background: transparent; border: 0; color: #fff; cursor: pointer;
+  min-width: 28px; height: 28px; padding: 0 6px; border-radius: 6px;
+  font-size: 0.9rem; font-weight: 700; line-height: 1;
+}
+.re-bubble-btn.re-i { font-style: italic; font-weight: 400; }
+.re-bubble-btn.re-s { text-decoration: line-through; }
+.re-bubble-btn:hover { background: rgba(255,255,255,0.15); }
+.re-bubble-btn.re-on { background: var(--previo-primary, #B50000); }
+
+/* slash paleta */
+.re-slash {
+  position: absolute; z-index: 100001; min-width: 200px; max-height: 280px; overflow-y: auto;
+  background: #fff; border: 1px solid var(--previo-grey200, #e5e5e5); border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(10,10,10,0.22); padding: 6px; font-family: "Inter", sans-serif;
+}
+.re-slash-item { padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #202124; }
+.re-slash-item.re-active { background: #F9EBEB; color: var(--previo-primary, #B50000); }
+.re-slash-empty { padding: 8px 10px; color: var(--previo-grey400, #b2b2b2); font-size: 0.85rem; }

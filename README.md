@@ -15,7 +15,7 @@ editor simply doesn't mount and you fall back to the native textarea.
 
 - **F0 — foundation (done):** mounts over the description / notes textarea, Markdown ⇄ rich
   round-trip, syncs back to the textarea.
-- **F1 — editing UX (in progress):** bubble toolbar, `/` slash palette, markdown input rules,
+- **F1 — editing UX (done):** bubble toolbar, `/` slash palette, markdown input rules,
   keyboard shortcuts; blocks: 4 heading levels, bullet / numbered / **task lists**, blockquote,
   code block, **tables**, horizontal rule, links (`Cmd/Ctrl + K`).
 - **F2 (planned):** `@` mentions, `#` issue links, `:` emoji, image/file drag & drop.
