@@ -1,0 +1,3 @@
+en:
+  re_setting_enabled: "Enable rich editor"
+  re_setting_enabled_hint: "Turn the Linear-style inline editor on/off. When off, the native textarea editor is used."

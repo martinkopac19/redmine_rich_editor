@@ -1,0 +1,8 @@
+<div class="box tabular settings">
+  <p>
+    <label for="enabled"><%= l(:re_setting_enabled) %></label>
+    <%= hidden_field_tag 'settings[enabled]', '0', id: nil %>
+    <%= check_box_tag 'settings[enabled]', '1', settings['enabled'].to_s != '0' %>
+    <em class="info"><%= l(:re_setting_enabled_hint) %></em>
+  </p>
+</div>

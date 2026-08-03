@@ -1,0 +1,3 @@
+sk:
+  re_setting_enabled: "Zapnúť rich editor"
+  re_setting_enabled_hint: "Zapne/vypne inline editor v štýle Linear. Keď je vypnutý, použije sa natívny textarea editor."

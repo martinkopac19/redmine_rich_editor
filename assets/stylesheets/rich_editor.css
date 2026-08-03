@@ -1,0 +1,26 @@
+/* Redmine Rich Editor (Previo) — základný vzhľad (F0; rozšíri sa v F1). */
+.re-editor {
+  border: 1px solid var(--previo-grey300, #ccc);
+  border-radius: var(--previo-radius, 8px);
+  padding: 8px 12px;
+  background: #fff;
+  font-family: "Inter", "Noto Sans", sans-serif;
+}
+.re-editor .ProseMirror {
+  outline: none;
+  min-height: 120px;
+  line-height: 1.5;
+}
+.re-editor .ProseMirror:focus { outline: none; }
+.re-editor .ProseMirror > *:first-child { margin-top: 0; }
+.re-editor .ProseMirror p { margin: 0 0 8px; }
+.re-editor .ProseMirror ul,
+.re-editor .ProseMirror ol { padding-left: 1.4em; margin: 0 0 8px; }
+.re-editor .ProseMirror blockquote {
+  border-left: 3px solid var(--previo-grey300, #ccc);
+  margin: 0 0 8px; padding-left: 10px; color: var(--previo-grey500, #515151);
+}
+.re-editor .ProseMirror pre {
+  background: #f6f7f9; border-radius: 6px; padding: 10px 12px; overflow-x: auto;
+}
+.re-editor .ProseMirror code { font-family: monospace; }
