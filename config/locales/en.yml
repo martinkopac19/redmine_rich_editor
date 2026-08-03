@@ -4,5 +4,5 @@ en:
   re_ph: "Write…  (\"/\" for blocks)"
   re_link_prompt: "Link (URL):"
   re_no_blocks: "No blocks"
-  re_add_comment: "Add a comment"
+  re_add_comment: "Add comment"
   re_submit: "Submit"

@@ -121,10 +121,6 @@ export function liveComments(editor, textarea) {
   try {
     var box = document.createElement('div');
     box.className = 're-comment-box';
-    var label = document.createElement('div');
-    label.className = 're-comment-label';
-    label.textContent = i18n.addComment || 'Add a comment';
-    box.appendChild(label);
     host.parentNode.insertBefore(box, host.nextSibling);
     box.appendChild(wrapper); // presuň rich editor do viditeľnej lišty
   } catch (e) { return; }
@@ -132,7 +128,7 @@ export function liveComments(editor, textarea) {
   var btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 're-comment-submit';
-  btn.textContent = i18n.submit || 'Submit';
+  btn.textContent = i18n.addComment || 'Add comment';
   box.appendChild(btn);
   var ind = makeIndicator(box);
 

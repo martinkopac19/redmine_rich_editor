@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.3
+
+- Rename the comment button to **"Add comment"** (was "Submit") so it's distinct from the
+  native edit-form **"Submit"** (which saves the whole issue). Dropped the now-redundant
+  "Add a comment" heading above the comment box.
+
 ## 0.7.2
 
 - Style: the native issue edit-form **Submit** button now matches the comment Submit button
