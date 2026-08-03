@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.2
+
+- Style: the native issue edit-form **Submit** button now matches the comment Submit button
+  (same height, radius, colour) so the two buttons on the issue page look consistent. Scoped
+  to `#issue-form` so other pages are unaffected.
+
 ## 0.7.1
 
 - Comments: **no more full-page reload** on Submit — the new comment is inserted by swapping in

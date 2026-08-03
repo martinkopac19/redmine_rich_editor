@@ -78,14 +78,19 @@
 /* F3 vždy-viditeľná lišta komentára */
 .re-comment-box { margin: 16px 0; padding-top: 12px; border-top: 1px solid var(--previo-grey200, #e5e5e5); }
 .re-comment-label { font-weight: 600; margin-bottom: 6px; color: var(--previo-grey600, #202124); }
-.re-comment-submit {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 34px; line-height: 1; margin-top: 10px; padding: 0 20px;
+/* zjednotený vzhľad: môj komentárový Submit + natívny issue-form Submit (nech sú rovnaké) */
+.re-comment-submit,
+#issue-form input[type="submit"],
+#issue-form button[type="submit"] {
+  min-height: 34px; padding: 0 20px; line-height: 34px;
   background: var(--previo-primary, #B50000); color: #fff; border: 0;
   border-radius: var(--previo-radius, 8px); font-size: 0.9rem; font-weight: 500;
-  cursor: pointer; font-family: inherit; box-sizing: border-box;
+  cursor: pointer; font-family: inherit; box-sizing: border-box; text-align: center;
 }
-.re-comment-submit:hover { background: var(--previo-primary-dark, #910000); }
+.re-comment-submit { display: inline-flex; align-items: center; justify-content: center; line-height: 1; margin-top: 10px; }
+.re-comment-submit:hover,
+#issue-form input[type="submit"]:hover,
+#issue-form button[type="submit"]:hover { background: var(--previo-primary-dark, #910000); }
 .re-comment-submit:disabled { opacity: 0.6; cursor: default; }
 
 /* F3 auto-save indikátor */
