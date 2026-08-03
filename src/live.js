@@ -99,6 +99,10 @@ export function liveDescription(editor, textarea) {
   try {
     wiki.parentNode.insertBefore(wrapper, wiki);
     wiki.style.display = 'none';
+    // skry zbytočný/mätúci pôvodný popis-riadok v edit formulári (label + "Edit" ikona +
+    // skrytá textarea) — popis sa teraz edituje live hore. Textarea ostáva v DOM ako data store.
+    var fieldP = textarea.closest('p');
+    if (fieldP) fieldP.style.display = 'none';
   } catch (e) { return; }
 
   var ind = makeIndicator(wrapper);
@@ -137,8 +141,17 @@ export function liveComments(editor, textarea) {
     if (!val) return;
     btn.disabled = true; ind.saving();
     autosave({ notes: val }).then(function (res) {
-      if (res.success) { window.location.reload(); }
-      else { btn.disabled = false; ind.failed(); }
+      btn.disabled = false;
+      if (!res.success) { ind.failed(); return; }
+      // bez reloadu: z odpovede (show page) vymeň históriu a vyčisti editor
+      try {
+        var doc = new DOMParser().parseFromString(res.text, 'text/html');
+        var nh = doc.getElementById('history');
+        var ch = document.getElementById('history');
+        if (nh && ch) ch.innerHTML = nh.innerHTML;
+      } catch (e) {}
+      editor.commands.setContent('');
+      ind.saved();
     }).catch(function () { btn.disabled = false; ind.failed(); });
   });
 }

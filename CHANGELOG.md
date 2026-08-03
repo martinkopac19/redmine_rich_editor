@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+- Comments: **no more full-page reload** on Submit — the new comment is inserted by swapping in
+  the updated history from the response, and the editor is cleared (no flash).
+- Submit button restyled (flex-centered label, consistent height).
+- Live description: the now-redundant description field inside the native edit form is hidden
+  (previously its leftover "Edit" toggle just hid its own icon and confused things).
+
 ## 0.7.0
 
 - F3 complete — **always-visible comments**: a rich-editor comment bar with a **Submit** button
