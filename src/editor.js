@@ -85,6 +85,7 @@ function mountOver(textarea) {
     // skry celý natívny widget; textarea (vnútri) ostáva ako "source of truth" pre uloženie
     if (block) block.style.display = 'none'; else textarea.style.display = 'none';
 
+    var reWriting = false; // guard: rozlíš náš zápis do textarey od externého (šablóny)
     var editor = new Editor({
       element: wrapper,
       extensions: extensions(),
@@ -102,14 +103,28 @@ function mountOver(textarea) {
         }
       },
       onUpdate: function (props) {
+        reWriting = true;
         textarea.value = props.editor.storage.markdown.getMarkdown();
+        reWriting = false;
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
 
     textarea._reEditor = editor;
 
-    // Re-sync, keď textareu naplní niekto zvonku (napr. vloženie šablóny).
+    // Externá zmena textarey (napr. vloženie šablóny cez redmine_issue_templates, ktoré
+    // nastaví .value priamo bez eventu) → premietni ju do editora. reWriting bráni slučke.
+    try {
+      var vdesc = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
+      Object.defineProperty(textarea, 'value', {
+        configurable: true,
+        get: function () { return vdesc.get.call(this); },
+        set: function (val) {
+          vdesc.set.call(this, val);
+          if (!reWriting) { try { editor.commands.setContent(val || ''); } catch (e) {} }
+        }
+      });
+    } catch (e) {}
     textarea.addEventListener('re:resync', function () {
       editor.commands.setContent(textarea.value || '');
     });

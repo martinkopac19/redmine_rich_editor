@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.4
+
+- Fix: **issue templates now populate the editor**. `redmine_issue_templates` sets the
+  description textarea's value directly (no event), so the editor now watches for external
+  writes to the textarea and reflects them (guarded against our own writes to avoid loops).
+- Fix: removed the **odd gap above the "Write…" placeholder** on the new-issue form — Redmine's
+  tabular-form `p` rules (`min-height`/`padding`) were bleeding into the editor's paragraphs;
+  the reset now also zeroes those.
+
 ## 0.7.3
 
 - Rename the comment button to **"Add comment"** (was "Submit") so it's distinct from the
