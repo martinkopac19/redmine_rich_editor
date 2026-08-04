@@ -12,6 +12,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { ReImage } from './image.js';
+import { ReHardBreak } from './hardbreak.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
@@ -38,7 +39,8 @@ var LinkShortcut = Extension.create({
 
 function extensions() {
   return [
-    StarterKit.configure({ heading: { levels: [1, 2, 3, 4] } }),
+    StarterKit.configure({ heading: { levels: [1, 2, 3, 4] }, hardBreak: false }),
+    ReHardBreak,
     Link.configure({ openOnClick: false, autolink: true }),
     TaskList,
     TaskItem.configure({ nested: true }),
@@ -51,7 +53,7 @@ function extensions() {
     EmojiSuggest,
     MentionSuggest,
     LinkShortcut,
-    Markdown.configure({ html: false, linkify: false, breaks: false, transformPastedText: true })
+    Markdown.configure({ html: false, linkify: false, breaks: true, transformPastedText: true })
   ];
 }
 

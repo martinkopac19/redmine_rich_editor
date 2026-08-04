@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.5
+
+- Fix: descriptions of existing tasks that use **single line breaks** inside a paragraph (e.g.
+  `**Where?**` on its own line, text below) now render correctly in the editor — matching
+  Redmine, which renders single newlines as `<br>` (`common_mark_enable_hardbreaks` is on).
+  The editor now parses single `\n` as a line break (`breaks: true`) and serializes it back to
+  a **plain `\n`** (custom hard-break node) so the stored Markdown is unchanged (no stray
+  backslashes, no false history diff).
+
 ## 0.7.4
 
 - Fix: **issue templates now populate the editor**. `redmine_issue_templates` sets the
