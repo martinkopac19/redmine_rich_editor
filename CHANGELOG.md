@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.4
+
+**The history tab now survives an inline comment.** Two things were off after the swap of
+`#history`:
+
+- The previously open tab was re-clicked only when the server had picked a *different* one. When
+  they matched, nothing ran — and since the `<script>` the tabs partial appends is never executed
+  from `innerHTML`, no journal filtering happened at all. The tab is now always re-clicked; the
+  click is idempotent.
+- Redmine writes the `history_last_tab` cookie from a handler delegated on `#history .tabs` — the
+  very element the swap destroys. From the first inline comment on, the cookie stopped being
+  updated, so the *Last tab visited* preference silently went stale. The plugin now delegates the
+  same write from `#history`, which survives.
+
+Note that which tab you land on after a **full page** submit is Redmine's own setting
+(*My account → Issue history default tab*), not something this plugin controls.
+
 ## 0.8.3
 
 **Fix: a comment could silently fail to save.** Adding a second comment without reloading the page

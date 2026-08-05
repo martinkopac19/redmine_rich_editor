@@ -3,13 +3,14 @@
 # žiadne migrácie, ukladá sa cez natívne Redmine endpointy (zachová journaly aj práva).
 
 require_relative 'lib/rich_editor/hooks'
+require_relative 'lib/rich_editor/journal_hooks'
 
 Redmine::Plugin.register :redmine_rich_editor do
   name 'Redmine Rich Editor (Previo)'
   author 'Martin Kopáč'
   description 'Linear-style inline WYSIWYG editor for issue title, description and comments. ' \
               'Text-area backed, round-trips to Markdown, preserves journals and permissions.'
-  version '0.8.3'
+  version '0.8.4'
   url 'https://github.com/martinkopac19/redmine_rich_editor'
   requires_redmine version_or_higher: '6.0'
 

@@ -156,6 +156,24 @@ export function liveDescription(editor, textarea) {
   editor.on('focus', function () { saver.onFocus(); });
 }
 
+/* Redmine si cookie `history_last_tab` (preferencia „posledná navštívená záložka")
+ * píše delegovaným handlerom na `#history .tabs`. Tento element pri inline uložení
+ * komentára prepisujeme cez innerHTML, čím handler zmizne — od prvého komentára by
+ * sa cookie prestala aktualizovať a Redmine by usera vracal na starý tab.
+ *
+ * Delegujeme preto z `#history`, ktorý zostáva. Zápis je zámerne rovnaký ako
+ * Redmineov (bez `path`), aby sa prepisovala tá istá cookie a nevznikla druhá. */
+export function keepLastTabCookie() {
+  var host = document.getElementById('history');
+  if (!host || host.dataset.reTabCookie) return;
+  host.dataset.reTabCookie = '1';
+  host.addEventListener('click', function (e) {
+    var link = e.target && e.target.closest ? e.target.closest('.tabs a[id^="tab-"]') : null;
+    if (!link) return;
+    document.cookie = 'history_last_tab=' + link.id.replace('tab-', '') + '; SameSite=Lax';
+  });
+}
+
 // LIVE KOMENTÁRE: notes editor presuň pod históriu ako vždy viditeľnú lištu + Submit tlačidlo.
 export function liveComments(editor, textarea) {
   var wrapper = editor.options && editor.options.element;
@@ -201,12 +219,12 @@ export function liveComments(editor, textarea) {
         var ch = document.getElementById('history');
         if (nh && ch) {
           ch.innerHTML = nh.innerHTML;
-          // obnov pôvodný tab (klik prejde cez natívny showIssueHistory → správne filtrovanie)
-          var now = ch.querySelector('.tabs a.selected');
-          if (prevTabId && (!now || now.id !== prevTabId)) {
-            var link = ch.querySelector('#' + prevTabId);
-            if (link) link.click();
-          }
+          // Obnov pôvodný tab. Klikáme VŽDY, aj keď server vyrenderoval ten istý tab:
+          // triedu `selected` síce prinesie HTML, ale journaly filtruje až
+          // showIssueHistory a inline <script> z tabs partialu sa po nastavení
+          // innerHTML nespustí. Klik je idempotentný.
+          var link = prevTabId ? ch.querySelector('#' + prevTabId) : null;
+          if (link) link.click();
         }
       } catch (e) {}
       // POZOR: `setContent` v tiptape 2 NEEMITUJE update (emitUpdate default false) → bez `true`
