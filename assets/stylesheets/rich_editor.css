@@ -97,6 +97,11 @@
 /* náhľad obrázka v režime "malý" (aj pri novom uploade, kde je src ešte blob plnej veľkosti) */
 .re-editor .ProseMirror img[data-re-display="thumb"] { cursor: pointer; }
 
+/* dvojitý náhľad: obrázok už je v texte → natívny náhľad prílohy skryjeme (viď src/dedupe.js).
+   `!important`, lebo natívny `showIssueHistory()` robí pri prepnutí tabu jQuery `.show()`. */
+.thumbnail.re-dupe-hidden,
+.thumbnails.re-dupe-hidden { display: none !important; }
+
 /* F3 inline názov (subject) */
 .subject h3.re-title-edit { outline: none; border-radius: 4px; padding: 1px 5px; margin-left: -5px; cursor: text; }
 .subject h3.re-title-edit:hover { background: var(--previo-grey100, #f2f2f2); }

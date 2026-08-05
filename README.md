@@ -50,6 +50,12 @@ Redmine caps image **width** to the content column but not **height**. So:
 Everything here is native Redmine Markdown and macros, so previews keep rendering even with the
 plugin turned off.
 
+**One preview, not two.** Redmine also renders its own preview for every attached image (under the
+*"File … added"* line in the history, and in the issue's *Files* section). When the image is already
+shown in the text, that duplicate is hidden — you get the in-text preview only. It is kept when the
+image isn't in the text (a plain attachment, or *Link only* mode), so nothing becomes invisible; the
+file itself always stays listed under *Files*.
+
 ## Keyboard
 
 | Key | Action |

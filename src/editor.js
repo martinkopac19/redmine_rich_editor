@@ -19,6 +19,7 @@ import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
 import { liveDescription, liveTitle, liveComments } from './live.js';
+import { dedupeThumbnails } from './dedupe.js';
 
 var CFG = window.RE_CONFIG || {};
 var I = CFG.i18n || {};
@@ -153,6 +154,8 @@ function mountOver(textarea) {
 function scan() {
   var list = document.querySelectorAll(SELECTOR);
   for (var i = 0; i < list.length; i++) mountOver(list[i]);
+  // obrázok, ktorý je už v texte, nemusí mať aj natívny náhľad pod ním
+  try { dedupeThumbnails(); } catch (e) {}
 }
 
 // Debounce: MutationObserver nesmie spúšťať scan() pri každej mutácii.

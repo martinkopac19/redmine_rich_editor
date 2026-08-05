@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.2
+
+- **Fix: the same screenshot was previewed twice.** Redmine adds its own preview for every attached
+  image — right under the *"File … added"* line in the history, and in the issue's *Files* section.
+  Together with 0.8.0's in-text preview you saw the same picture twice. The native preview is now
+  hidden **when that attachment is already shown as an image in the text**, leaving just the in-text
+  preview you can click for the full size.
+
+  It stays visible when the image is *not* in the text — a plain attachment, or the *Link only*
+  mode — otherwise there would be no way to see it at all. Nothing is deleted: the file stays in
+  the *Files* list, and turning the plugin off brings the stock behaviour back.
+
 ## 0.8.1
 
 Fixes for bugs found while using 0.8.0 on the issue page (0.8.0 only got tested on the
