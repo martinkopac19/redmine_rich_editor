@@ -47,6 +47,38 @@ function uploadFile(file) {
   });
 }
 
+// Formulár, do ktorého patria skryté `attachments[]` polia.
+// POZOR: na detaile issue F3 (`src/live.js`) PRESUNIE editor MIMO `#issue-form` (popis pred
+// `#issue_description_wiki`, komentár pod `#history`) → `closest('form')` je vtedy null a bez
+// tohto fallbacku by sa upload nikdy nepriložil (`{{thumbnail}}` → „Attachment not found").
+function targetForm(editor) {
+  var dom = editor.view && editor.view.dom;
+  return (dom && dom.closest('form')) || document.getElementById('issue-form') || null;
+}
+
+// Obrázok z clipboardu má v prehliadači vždy generický názov („image.png") → viac screenshotov
+// v jednom issue by sa prekrývalo (Redmine rieši duplicitné názvy cez `Attachment.latest_attach`).
+// Prepíšeme ho rovnakou konvenciou, akú používa natívny Redmine: `clipboard-YYYYMMDDhhmm-xxxxx.ext`.
+export function clipboardName(file) {
+  var d = new Date();
+  var p2 = function (n) { return ('0' + n).slice(-2); };
+  var ext = (file.name || '').split('.').pop();
+  if (!ext || ext === file.name) ext = (file.type || '').split('/').pop() || 'png';
+  var rnd = '';
+  var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  for (var i = 0; i < 5; i++) rnd += chars.charAt(Math.floor(Math.random() * chars.length));
+  return 'clipboard-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) +
+    p2(d.getHours()) + p2(d.getMinutes()) + '-' + rnd + '.' + ext.toLowerCase();
+}
+
+// Súbory z clipboardu → premenované kópie (obrázky). Ostatné nechá tak.
+export function renameClipboardFiles(files) {
+  return Array.prototype.map.call(files, function (file) {
+    if (!/^image\//.test(file.type || '')) return file;
+    try { return new File([file], clipboardName(file), { type: file.type }); } catch (e) { return file; }
+  });
+}
+
 // Skryté polia do issue formulára → Redmine súbor priloží pri uložení (aj bez referencie v texte).
 function addFormFields(form, att) {
   if (!form || !att.token) return;
@@ -104,7 +136,8 @@ function insertRef(editor, att, file) {
 
 export function handleFiles(editor, files) {
   if (!files || !files.length) return;
-  var form = editor.view && editor.view.dom.closest('form');
+  var form = targetForm(editor);
+  if (!form && window.console) console.warn('[rich_editor] no form for attachments — upload would not be attached');
   Array.prototype.forEach.call(files, function (file) {
     uploadFile(file).then(function (att) {
       addFormFields(form, att);

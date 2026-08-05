@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.1
+
+Fixes for bugs found while using 0.8.0 on the issue page (0.8.0 only got tested on the
+*new issue* form, where the editor still sits inside `#issue-form` — on the issue detail page
+F3 moves it out, which broke all three of these).
+
+- **Fix: files pasted on the issue page were never attached.** The hidden `attachments[]` fields
+  were bound via `closest('form')`, which returns `null` once F3 has moved the editor out of
+  `#issue-form` (description above the rendered text, comment box below the history). The upload
+  itself succeeded, so the text referenced a file that was never attached — with 0.8.0's
+  `{{thumbnail}}` that surfaced as *"Error executing the thumbnail macro (Attachment image.png not
+  found)"*. Now falls back to `#issue-form`.
+- **Fix: "Add comment" switched the history tab.** The reply is re-rendered by the server using the
+  user's `history_default_tab` preference, so swapping in the fresh `#history` moved you off the
+  tab you were on (typically History → Notes). The previously selected tab is now restored.
+- **Fix: clipboard images were all called `image.png`.** Browsers give every pasted image that same
+  generic name, so a second screenshot in the same issue collided with the first (Redmine resolves
+  duplicate names via `Attachment.latest_attach`, i.e. both references pointed at the newest file).
+  Pasted images are now renamed the way Redmine itself does it:
+  `clipboard-YYYYMMDDhhmm-xxxxx.png`.
+- **Fix: submitting a comment left the old text in the textarea**, so a second click on
+  "Add comment" posted the same comment again. (`setContent` doesn't emit an update in TipTap 2,
+  which is what kept the textarea stale.)
+
 ## 0.8.0
 
 **Images**

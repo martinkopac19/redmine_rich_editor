@@ -136,6 +136,11 @@ export function liveComments(editor, textarea) {
     var val = (textarea.value || '').trim();
     if (!val) return;
     btn.disabled = true; ind.saving();
+    // Ktorý tab histórie (History / Notes / Property changes) má user otvorený. Server vyrenderuje
+    // odpoveď podľa `issue_history_default_tab` (preferencia usera), takže bez tohto by výmena
+    // histórie usera prehodila na iný tab.
+    var prevTab = document.querySelector('#history .tabs a.selected');
+    var prevTabId = prevTab ? prevTab.id : null;
     autosave({ notes: val }).then(function (res) {
       btn.disabled = false;
       if (!res.success) { ind.failed(); return; }
@@ -144,9 +149,20 @@ export function liveComments(editor, textarea) {
         var doc = new DOMParser().parseFromString(res.text, 'text/html');
         var nh = doc.getElementById('history');
         var ch = document.getElementById('history');
-        if (nh && ch) ch.innerHTML = nh.innerHTML;
+        if (nh && ch) {
+          ch.innerHTML = nh.innerHTML;
+          // obnov pôvodný tab (klik prejde cez natívny showIssueHistory → správne filtrovanie)
+          var now = ch.querySelector('.tabs a.selected');
+          if (prevTabId && (!now || now.id !== prevTabId)) {
+            var link = ch.querySelector('#' + prevTabId);
+            if (link) link.click();
+          }
+        }
       } catch (e) {}
-      editor.commands.setContent('');
+      // POZOR: `setContent` v tiptape 2 NEEMITUJE update (emitUpdate default false) → bez `true`
+      // by v textarei zostal starý text a druhý klik na „Add comment" by poslal duplikát.
+      editor.commands.setContent('', true);
+      if ((textarea.value || '').trim()) textarea.value = '';
       ind.saved();
     }).catch(function () { btn.disabled = false; ind.failed(); });
   });

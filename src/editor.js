@@ -17,7 +17,7 @@ import { ReHardBreak } from './hardbreak.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { attachBubble, promptLink } from './bubble.js';
-import { handleFiles, openFilePicker } from './attachments.js';
+import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
 import { liveDescription, liveTitle, liveComments } from './live.js';
 
 var CFG = window.RE_CONFIG || {};
@@ -96,7 +96,8 @@ function mountOver(textarea) {
       editorProps: {
         handlePaste: function (view, event) {
           var files = event.clipboardData && event.clipboardData.files;
-          if (files && files.length) { handleFiles(editor, files); return true; }
+          // z clipboardu majú obrázky generické „image.png" → premenuj (viď attachments.js)
+          if (files && files.length) { handleFiles(editor, renameClipboardFiles(files)); return true; }
           return false;
         },
         handleDrop: function (view, event) {
