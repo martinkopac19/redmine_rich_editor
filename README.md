@@ -50,6 +50,12 @@ Redmine caps image **width** to the content column but not **height**. So:
 Everything here is native Redmine Markdown and macros, so previews keep rendering even with the
 plugin turned off.
 
+**Deleting a comment deletes its images.** Redmine's *Delete* on a comment only blanks the text, so
+a comment that carried a screenshot used to stay behind as a bare *"File … added"* line with the
+image still attached. Those files are now removed for good — but only the ones that came with that
+comment, and only if the filename isn't referenced in the description or another comment. This is
+irreversible; editing a comment (rather than deleting it) never removes a file.
+
 **One preview, not two.** Redmine also renders its own preview for every attached image (under the
 *"File … added"* line in the history, and in the issue's *Files* section). When the image is already
 shown in the text, that duplicate is hidden — you get the in-text preview only. It is kept when the

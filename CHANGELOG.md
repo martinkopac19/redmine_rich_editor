@@ -17,6 +17,23 @@
 Note that which tab you land on after a **full page** submit is Redmine's own setting
 (*My account → Issue history default tab*), not something this plugin controls.
 
+**Deleting a comment now also deletes the images it brought with it.** Redmine's *Delete* on a
+comment only blanks the note text, and the comment is dropped only if it carries no property
+changes — a comment with a pasted screenshot carries a *"File … added"* entry, so the comment
+stayed as that bare line and the image stayed attached to the issue, in *Files* and on disk.
+
+The attachments that arrived with a deleted comment are now removed for good: the file, the
+*"File … added"* line, and the emptied comment itself. Deliberate limits:
+
+- Only files that came with **that** comment, and only if the filename isn't mentioned in the
+  description or in any other comment — so a file someone else links to is never pulled away.
+- Only on **delete**. Editing a comment and taking the image out of the text leaves the file alone.
+- **This is irreversible** (that's the point) — the file is gone from disk too, unless another
+  attachment happens to share the same bytes, which Redmine stores once.
+
+Done through the native `controller_journals_edit_post` hook — no core patch — so the plugin's
+kill-switch restores Redmine's stock behaviour.
+
 ## 0.8.3
 
 **Fix: a comment could silently fail to save.** Adding a second comment without reloading the page
