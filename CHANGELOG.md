@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.5
+
+Two bits of Redmine's form CSS were leaking into the editor:
+
+- **Checklist boxes now line up with their text.** `.tabular label` (`float:left`,
+  `margin-left:-180px`, `width:175px`) applies to the checkbox label, which pulled the box out past
+  the editor's left edge and left it sitting above the text baseline. The checkbox is now centred on
+  the first line of its text, and checklist text starts at exactly the same indent as bullet and
+  numbered list text.
+- **Headings differ only in size, and are always bold.** Redmine's global
+  `h4 { border-bottom: 1px solid #ccc; font-weight: normal }` reached the editor (core only
+  overrides it under `.wiki`), so an H4 came out thin with a full-width rule under it. H1–H4 are now
+  bold with no border, at the same sizes Redmine renders them at (1.6 / 1.4 / 1.2 / 1.1em) — so the
+  editor shows what the reader will see.
+
+Also: list items no longer carry the paragraph's bottom margin, so multi-item lists sit tighter.
+
 ## 0.8.4
 
 **The history tab now survives an inline comment.** Two things were off after the swap of

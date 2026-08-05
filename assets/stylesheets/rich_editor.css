@@ -18,11 +18,22 @@
 .re-editor .ProseMirror pre,
 .re-editor .ProseMirror ul, .re-editor .ProseMirror ol { padding: 0; min-height: 0; }
 .re-editor .ProseMirror p { margin: 0 0 8px; }
+/* Nadpisy sa líšia LEN veľkosťou písma, vždy bold. Redmine globálne nastavuje
+   `h4 { border-bottom: 1px solid #ccc; font-weight: normal }` a `h1..h6 { color:#555 }`
+   (v jadre si to opravuje až pod `.wiki`, kam editor nepatrí) → resetujeme.
+   Veľkosti sú rovnaké ako `.wiki h1..h4` v Redmine, aby editor ukazoval to, čo uvidí čitateľ. */
+.re-editor .ProseMirror h1,
+.re-editor .ProseMirror h2,
+.re-editor .ProseMirror h3,
+.re-editor .ProseMirror h4 { border: none; font-weight: 700; }
 .re-editor .ProseMirror h1 { font-size: 1.6em; margin: 12px 0 6px; }
 .re-editor .ProseMirror h2 { font-size: 1.4em; margin: 12px 0 6px; }
 .re-editor .ProseMirror h3 { font-size: 1.2em; margin: 10px 0 5px; }
-.re-editor .ProseMirror h4 { font-size: 1.05em; margin: 10px 0 5px; }
+.re-editor .ProseMirror h4 { font-size: 1.1em; margin: 10px 0 5px; }
 .re-editor .ProseMirror ul, .re-editor .ProseMirror ol { padding-left: 1.4em; margin: 0 0 8px; }
+/* text v položke zoznamu bez spodnej medzery (inak sú položky zbytočne rozhodené) */
+.re-editor .ProseMirror li > p { margin: 0; }
+.re-editor .ProseMirror li + li { margin-top: 2px; }
 .re-editor .ProseMirror blockquote {
   border-left: 3px solid var(--previo-grey300, #ccc);
   margin: 0 0 8px; padding-left: 10px; color: var(--previo-grey500, #515151);
@@ -43,11 +54,25 @@
   float: left; height: 0; pointer-events: none;
 }
 
-/* checklisty (task list) */
-.re-editor ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
-.re-editor ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 6px; }
-.re-editor ul[data-type="taskList"] li > label { margin-top: 2px; }
-.re-editor ul[data-type="taskList"] li > div { flex: 1; }
+/* checklisty (task list)
+   Rozmery sú zvolené tak, aby text checklistu začínal na tej istej pozícii ako text
+   odrážok/číslovania (0 + 15px checkbox + 4px gap ≈ 1.4em odsadenie `ul`/`ol`) a aby checkbox
+   nevytŕčal z editora. Výška labelu = výška riadku → checkbox je na strede prvého riadku textu. */
+.re-editor ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.re-editor ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 4px; }
+/* POZOR na leak z formulárového CSS Redmine:
+   `.tabular label { float:left; margin-left:-180px; width:175px; text-align:right; line-height:24px }`
+   — bez tohto resetu checkbox vytŕčal z editora (kvôli margin-left:-180px), resp. po flexe
+   vyrobil 175px široký stĺpec. */
+.re-editor ul[data-type="taskList"] li > label {
+  display: flex; align-items: center; justify-content: flex-start;
+  float: none; width: auto; min-width: 0; height: 1.5em;
+  margin: 0; padding: 0; text-align: left; line-height: 1; flex: 0 0 auto;
+}
+.re-editor ul[data-type="taskList"] li > label input[type="checkbox"] {
+  width: 15px; height: 15px; margin: 0; padding: 0; cursor: pointer; vertical-align: middle;
+}
+.re-editor ul[data-type="taskList"] li > div { flex: 1 1 auto; min-width: 0; }
 
 /* tabuľky */
 .re-editor .ProseMirror table { border-collapse: collapse; width: 100%; margin: 0 0 8px; }
