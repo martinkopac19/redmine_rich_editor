@@ -12,12 +12,25 @@ module RichEditor
         base: Redmine::Utils.relative_url_root.to_s,
         meId: User.current.id,
         projectId: (eff_project ? eff_project.id : nil),
+        atts: attachment_map(issue),
         i18n: {
           placeholder: ::I18n.t(:re_ph),
           link: ::I18n.t(:re_link_prompt),
           noBlocks: ::I18n.t(:re_no_blocks),
           addComment: ::I18n.t(:re_add_comment),
-          submit: ::I18n.t(:re_submit)
+          submit: ::I18n.t(:re_submit),
+          textSize: ::I18n.t(:re_text_size),
+          normalText: ::I18n.t(:re_normal_text),
+          heading: ::I18n.t(:re_heading),
+          bulletList: ::I18n.t(:re_bullet_list),
+          numberedList: ::I18n.t(:re_numbered_list),
+          checklist: ::I18n.t(:re_checklist),
+          codeBlock: ::I18n.t(:re_code_block),
+          imgSmall: ::I18n.t(:re_img_small),
+          imgFull: ::I18n.t(:re_img_full),
+          imgLink: ::I18n.t(:re_img_link),
+          imgSmaller: ::I18n.t(:re_img_smaller),
+          imgBigger: ::I18n.t(:re_img_bigger)
         }
       }
       out = +''
@@ -33,6 +46,24 @@ module RichEditor
     end
 
     private
+
+    # filename → { u: URL plného obrázka, t: základ URL náhľadu (JS doplní /<size>) }.
+    # Slúži len na NÁHĽAD v editore: bez toho má editor v `src` iba filename (rozbitý obrázok,
+    # kým sa issue neuloží). Cesty stavíme ručne — hook nemá spoľahlivý routing kontext.
+    # Rovnaké mená prílohy: vyhráva najnovšia (rovnako ako Attachment.latest_attach v jadre).
+    def attachment_map(issue)
+      return {} unless issue
+
+      root = Redmine::Utils.relative_url_root.to_s
+      issue.attachments.sort_by(&:id).each_with_object({}) do |a, h|
+        h[a.filename] = {
+          u: "#{root}/attachments/download/#{a.id}/#{ERB::Util.url_encode(a.filename)}",
+          t: (a.thumbnailable? ? "#{root}/attachments/thumbnail/#{a.id}" : nil)
+        }
+      end
+    rescue StandardError
+      {}
+    end
 
     def safe_current_issue(context)
       c = context[:controller]

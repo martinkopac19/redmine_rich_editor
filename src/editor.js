@@ -12,6 +12,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import { ReImage } from './image.js';
+import { preprocess } from './md-compat.js';
 import { ReHardBreak } from './hardbreak.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
@@ -91,7 +92,7 @@ function mountOver(textarea) {
     var editor = new Editor({
       element: wrapper,
       extensions: extensions(),
-      content: textarea.value || '',
+      content: preprocess(textarea.value || ''),
       editorProps: {
         handlePaste: function (view, event) {
           var files = event.clipboardData && event.clipboardData.files;
@@ -123,12 +124,12 @@ function mountOver(textarea) {
         get: function () { return vdesc.get.call(this); },
         set: function (val) {
           vdesc.set.call(this, val);
-          if (!reWriting) { try { editor.commands.setContent(val || ''); } catch (e) {} }
+          if (!reWriting) { try { editor.commands.setContent(preprocess(val || '')); } catch (e) {} }
         }
       });
     } catch (e) {}
     textarea.addEventListener('re:resync', function () {
-      editor.commands.setContent(textarea.value || '');
+      editor.commands.setContent(preprocess(textarea.value || ''));
     });
     attachBubble(editor);
 

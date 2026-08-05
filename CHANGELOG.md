@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.8.0
+
+**Images**
+
+- **Big screenshots no longer bury the text below them.** A pasted or dropped image wider than
+  1200 px (or taller than 800 px) is inserted as a **small clickable preview** — Redmine's own
+  `{{thumbnail(file.png, size=350)}}` macro — so the reader sees the text under it right away and
+  still gets the full image on click. Smaller images keep going in inline at full size.
+- **Three display modes per image**, switchable from a toolbar that appears when you click an
+  image in the editor:
+  - *Small preview (clickable)* → `{{thumbnail(file.png, size=N)}}`
+  - *Full width* → `![](file.png)`
+  - *Link only* → `attachment:file.png` (a plain text link — the same thing you'd get by pasting
+    a URL behind selected text, without leaving the editor)
+  - `−` / `+` step the preview size through 200 / 350 / 500 / 650 / 800 px. Those are multiples of
+    50 on purpose: Redmine rounds thumbnail sizes up to the nearest 50 (max 800), so the editor
+    shows exactly what the reader will see.
+- **Existing images now preview properly in the editor.** Previously an image already saved in a
+  description showed up broken until the issue was reloaded, because the Markdown only carries the
+  filename. The issue's attachments are now passed to the editor (filename → attachment URL), so
+  saved images render — as a thumbnail in *Small preview* mode, full size otherwise.
+- Fix: **non-image attachments** were inserted as `[file.zip](file.zip)`, which Redmine renders as
+  a broken relative link. They now use `attachment:file.zip`, which resolves to the attachment.
+- SVG files are never put in preview mode — Redmine can't generate thumbnails for them.
+
+**Bubble toolbar (select text)**
+
+- Added **text size** (a dropdown: Normal text, Heading 1–4; the button shows the current level),
+  **bullet list**, **numbered list**, **checklist** and **code block** next to the existing
+  bold / italic / strikethrough / inline code / link.
+
+**Keyboard**
+
+- `Cmd/Ctrl+K` is now **contextual**, like Linear: with text selected in the editor it inserts a
+  link; with no selection, or outside the editor, it opens the command palette. `Cmd/Ctrl+Shift+K`
+  always opens the palette. (Needs `redmine_command_palette` **0.4.1** or newer.)
+
+All of this uses native Redmine Markdown and macros — no core patch, no migration — so previews
+keep working even with the plugin's kill-switch off.
+
 ## 0.7.5
 
 - Fix: descriptions of existing tasks that use **single line breaks** inside a paragraph (e.g.

@@ -22,6 +22,48 @@ editor simply doesn't mount and you fall back to the native textarea.
   (drag & drop, paste, `Cmd/Ctrl + Shift + A`, `/file`).
 - **F3 (done):** live description with auto-save on blur/idle, inline title editing, and an
   always-visible comments bar with Submit — all on the issue page.
+- **F4 (done):** image handling — big pasted screenshots become small clickable previews, with a
+  per-image toolbar (small preview / full width / link only + preview size), and images already
+  saved in a description now preview correctly in the editor. Bubble toolbar gained text size and
+  block buttons (lists, checklist, code block).
+
+## Images
+
+A screenshot from a large monitor, pasted at full size, pushes the text below it out of sight —
+Redmine caps image **width** to the content column but not **height**. So:
+
+- Pasted / dropped images wider than **1200 px** (or taller than 800 px) are inserted as a
+  **small clickable preview** using Redmine's own macro: `{{thumbnail(shot.png, size=350)}}`.
+  Smaller images go in inline at full size: `![](icon.png)`.
+- Click an image in the editor to switch its mode:
+
+  | Mode | Stored Markdown | Rendered |
+  |---|---|---|
+  | Small preview (clickable) | `{{thumbnail(shot.png, size=N)}}` | small thumbnail, click → full image |
+  | Full width | `![](shot.png)` | inline image, full width |
+  | Link only | `attachment:shot.png` | plain text link to the attachment |
+
+  `−` / `+` step the size through **200 / 350 / 500 / 650 / 800 px** — multiples of 50, because
+  Redmine rounds thumbnail sizes up to the nearest 50 (and caps at 800), so what you see in the
+  editor is what the reader gets.
+
+Everything here is native Redmine Markdown and macros, so previews keep rendering even with the
+plugin turned off.
+
+## Keyboard
+
+| Key | Action |
+|-----|--------|
+| `Cmd/Ctrl + B` / `I` | Bold / italic |
+| `Cmd/Ctrl + K` | Insert link — **when text is selected** |
+| `Cmd/Ctrl + Shift + A` | Attach a file |
+| `/` | Block palette |
+| `#` / `@` / `:` | Issue link / mention / emoji |
+
+`Cmd/Ctrl + K` is contextual (like Linear): with a selection it belongs to the editor and inserts
+a link; with no selection — or outside the editor — it opens the
+[command palette](https://github.com/martinkopac19/redmine_command_palette) (**0.4.1+** required
+for this split; `Cmd/Ctrl + Shift + K` always opens the palette).
 
 ## Scope
 
