@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.3
+
+**Fix: a comment could silently fail to save.** Adding a second comment without reloading the page
+lost it — the UI said "Saved", the editor cleared, but nothing was stored. Three things lined up:
+
+- The `lock_version` (Redmine's optimistic-locking counter) was never refreshed after a save,
+  because the regex reading it out of the reply assumed `value` comes *after* `name` in the
+  `<input>`. Rails renders it the other way round, so the match never fired and every save after
+  the first one sent a stale version.
+- Redmine answers a stale version with `ActiveRecord::StaleObjectError` and re-renders the edit
+  view containing `<div class="conflict">` — but **no** `errorExplanation`, which is all the
+  success check looked for. So a rejected save was read as a successful one, and the comment text
+  was cleared away.
+- The reply is followed through a redirect, and Redmine sends `ETag` + `must-revalidate`, so the
+  browser could answer that follow-up from its own cache with a **304** — leaving us reading a page
+  from *before* the save. Requests now go out with `cache: 'no-store'`.
+
+On top of the fixes, saving is now self-correcting and honest about failure:
+
+- A conflict re-reads the current `lock_version` from the server and **retries once**, so a save
+  no longer fails just because the page's counter drifted.
+- The comment editor is only cleared once the reply actually contains the new comment. If anything
+  goes wrong, your text stays where it is and the indicator says so.
+
 ## 0.8.2
 
 - **Fix: the same screenshot was previewed twice.** Redmine adds its own preview for every attached

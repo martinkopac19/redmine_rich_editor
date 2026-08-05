@@ -7,8 +7,43 @@ function csrf() {
 }
 function issueForm() { return document.getElementById('issue-form'); }
 
-// Auto-save čiastkových polí issue cez natívny update (_method=patch). Rieši lock_version.
-export function autosave(fields) {
+// `lock_version` z HTML. POZOR na poradie atribútov: Rails renderuje
+// `<input autocomplete="off" type="hidden" value="50" name="issue[lock_version]" …>`,
+// teda `value` PRED `name` → naivný regex „name=… potom value=…" nikdy nesedel a lock_version
+// sa po uložení neaktualizoval → druhé uloženie na tej istej stránke skončilo konfliktom.
+function parseLockVersion(html) {
+  var tag = /<input[^>]*name="issue\[lock_version\]"[^>]*>/i.exec(html || '');
+  if (!tag) return null;
+  var v = /value="(\d+)"/i.exec(tag[0]);
+  return v ? v[1] : null;
+}
+
+// Redmine pri `ActiveRecord::StaleObjectError` vyrenderuje `edit` s `<div class="conflict">`
+// (a prílohy odpojí) — BEZ `errorExplanation`. Bez tejto detekcie sa konflikt tvári ako úspech
+// a komentár sa tiicho zahodí.
+function isConflict(html) {
+  return /class="conflict"/.test(html || '');
+}
+
+// Znovu prečítaj aktuálne lock_version priamo zo servera (po konflikte alebo keď sa nedá vyparsovať).
+// `cache: 'no-store'` je dôležité: Redmine posiela ETag + `must-revalidate`, takže inak môže
+// prehliadač vrátiť 304 a my by sme čítali STARÚ stránku.
+function refreshLockVersion(form) {
+  var action = form.getAttribute('action');
+  return fetch(action, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  }).then(function (r) { return r.text(); }).then(function (t) {
+    var lv = parseLockVersion(t);
+    var lvEl = form.querySelector('input[name="issue[lock_version]"]');
+    if (lv && lvEl) lvEl.value = lv;
+    return lv;
+  }).catch(function () { return null; });
+}
+
+// Auto-save čiastkových polí issue cez natívny update (_method=patch). Rieši lock_version aj konflikt.
+export function autosave(fields, _retry) {
   var form = issueForm();
   if (!form) return Promise.reject(new Error('no #issue-form'));
   var action = form.getAttribute('action');
@@ -23,17 +58,26 @@ export function autosave(fields) {
   attInputs.forEach(function (inp) { body.append(inp.name, inp.value); });
   return fetch(action, {
     method: 'POST', credentials: 'same-origin',
+    cache: 'no-store', // nech nás nedostihne 304 z prehliadačovej cache (ETag + must-revalidate)
     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString()
   }).then(function (r) {
     return r.text().then(function (t) { return { ok: r.ok, status: r.status, text: t }; });
   }).then(function (res) {
-    // z odpovede (redirect na show) vytiahni nové lock_version pre ďalšie uloženie
-    var m = res.text.match(/name="issue\[lock_version\]"[^>]*value="(\d+)"/);
-    if (m && lvEl) lvEl.value = m[1];
+    // konflikt (niekto — často naše vlastné predchádzajúce uloženie — medzitým issue zmenil):
+    // vytiahni aktuálne lock_version a skús RAZ znova, nech sa text nestratí
+    if (isConflict(res.text)) {
+      if (_retry) { res.success = false; res.conflict = true; return res; }
+      return refreshLockVersion(form).then(function () { return autosave(fields, true); });
+    }
+    var lv = parseLockVersion(res.text);
+    if (lv && lvEl) lvEl.value = lv;
     res.success = res.ok && !/id="errorExplanation"/.test(res.text);
-    // úspešne priložené tokeny odstráň, nech sa pri ďalšom uložení neposielajú znova
-    if (res.success) attInputs.forEach(function (inp) { if (inp.parentNode) inp.parentNode.removeChild(inp); });
+    // ak sa lock_version z odpovede nedá prečítať, dotiahni ho — inak by ďalšie uloženie konfliktovalo
+    if (res.success) {
+      attInputs.forEach(function (inp) { if (inp.parentNode) inp.parentNode.removeChild(inp); });
+      if (!lv) refreshLockVersion(form);
+    }
     return res;
   });
 }
@@ -141,13 +185,19 @@ export function liveComments(editor, textarea) {
     // histórie usera prehodila na iný tab.
     var prevTab = document.querySelector('#history .tabs a.selected');
     var prevTabId = prevTab ? prevTab.id : null;
+    var countBefore = document.querySelectorAll('#history .journal').length;
     autosave({ notes: val }).then(function (res) {
       btn.disabled = false;
       if (!res.success) { ind.failed(); return; }
       // bez reloadu: z odpovede (show page) vymeň históriu a vyčisti editor
+      var doc = null;
+      try { doc = new DOMParser().parseFromString(res.text, 'text/html'); } catch (e) {}
+      // POISTKA: text zmažeme LEN keď v odpovedi naozaj pribudol komentár. Keby uloženie tíško
+      // neprešlo (konflikt, cache, čokoľvek), radšej necháme rozpísaný text v editore.
+      var landed = !doc || doc.querySelectorAll('#history .journal').length > countBefore;
+      if (!landed) { ind.failed(); return; }
       try {
-        var doc = new DOMParser().parseFromString(res.text, 'text/html');
-        var nh = doc.getElementById('history');
+        var nh = doc && doc.getElementById('history');
         var ch = document.getElementById('history');
         if (nh && ch) {
           ch.innerHTML = nh.innerHTML;
