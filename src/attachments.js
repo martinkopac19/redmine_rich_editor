@@ -28,8 +28,13 @@ function thumbnailable(att) {
   return /\.(bmp|gif|jpe?g|jpe|png|webp)$/i.test(att.filename || '');
 }
 
-// Upload jedného súboru → { token, filename, contentType }.
+// Upload jedného súboru → { token, id, filename, contentType }.
 // Používa `/uploads.js` (in-session + CSRF; token je v JS odpovedi: .val('<id>.<digest>')).
+//
+// KĽÚČOVÉ: token má tvar `<id>.<digest>` (`Attachment#token` v jadre), takže **id prílohy
+// poznáme hneď po nahratí**, ešte pred uložením issue/komentára. Vďaka tomu vieme rovno
+// postaviť trvalú URL na prílohu (režim „len odkaz"). Pri uložení `Attachment.attach_files`
+// len doplní `container` — id sa nemení.
 function uploadFile(file) {
   var url = base + '/uploads.js?filename=' + encodeURIComponent(file.name);
   return fetch(url, {
@@ -43,8 +48,38 @@ function uploadFile(file) {
   }).then(function (text) {
     var m = text.match(/\.val\('(\d+\.[a-f0-9]+)'\)/i);
     if (!m) throw new Error('no token in upload response');
-    return { token: m[1], filename: file.name, contentType: file.type };
+    return { token: m[1], id: m[1].split('.')[0], filename: file.name, contentType: file.type };
   });
+}
+
+/* Trvalá URL na stránku prílohy v Redmine — to, čo sa vkladá pri režime „len odkaz".
+   Je ABSOLÚTNA, aby sa dala označiť, skopírovať a poslať kolegovi (napr. cez Google Chat);
+   Redmine si vyžiada prihlásenie (`AttachmentsController` má `read_authorize`).
+
+   Host berieme z `window.location.origin`, NIE zo `Setting.host_name` — na klone aj na
+   testovacom serveri je host_name `redmine.previo.info` (prišlo to s produkčným dumpom),
+   takže serverom stavaná URL by z klonu odkazovala na produkciu a ukazovala cudzí obrázok. */
+export function attachmentPageUrl(id) {
+  if (!id) return null;
+  return window.location.origin + base + '/attachments/' + id;
+}
+
+/* Prílohy nahraté v tejto relácii: id → filename. `RE_CONFIG.atts` obsahuje len prílohy,
+   ktoré na stránke boli pri jej vykreslení — čerstvý upload v ňom nie je. */
+var uploaded = {};
+export function rememberUpload(att) {
+  if (att && att.id && att.filename) uploaded[att.id] = att.filename;
+}
+export function filenameForAttId(id) {
+  if (!id) return null;
+  if (uploaded[id]) return uploaded[id];
+  var map = (window.RE_CONFIG || {}).atts || {};
+  var names = Object.keys(map);
+  for (var i = 0; i < names.length; i++) {
+    var u = (map[names[i]] || {}).u || '';
+    if (new RegExp('/attachments/(?:download/)?' + id + '(?:/|$)').test(u)) return names[i];
+  }
+  return null;
 }
 
 // Formulár, do ktorého patria skryté `attachments[]` polia.
@@ -128,19 +163,32 @@ function insertRef(editor, att, file) {
       var display = (canThumb && big) ? 'thumb' : 'full';
       editor.chain().focus().insertContent({
         type: 'image',
-        attrs: { src: src, filename: att.filename, alt: att.filename, display: display, size: THUMB_DEFAULT }
+        attrs: {
+          src: src, filename: att.filename, alt: att.filename,
+          display: display, size: THUMB_DEFAULT, attId: att.id || null
+        }
       }).run();
       editor.chain().focus().insertContent(' ').run();
     });
 }
 
-export function handleFiles(editor, files) {
-  if (!files || !files.length) return;
+/* Nahrá súbor a priviaže ho na formulár (skryté `attachments[]` polia), ale NIČ nevkladá
+   do textu — vloženie si rieši volajúci. Používa to aj dialóg odkazu (Ctrl+K), kde sa
+   z prilepeného obrázka robí odkaz, nie náhľad. */
+export function uploadAndAttach(editor, file) {
   var form = targetForm(editor);
   if (!form && window.console) console.warn('[rich_editor] no form for attachments — upload would not be attached');
+  return uploadFile(file).then(function (att) {
+    addFormFields(form, att);
+    rememberUpload(att);
+    return att;
+  });
+}
+
+export function handleFiles(editor, files) {
+  if (!files || !files.length) return;
   Array.prototype.forEach.call(files, function (file) {
-    uploadFile(file).then(function (att) {
-      addFormFields(form, att);
+    uploadAndAttach(editor, file).then(function (att) {
       return insertRef(editor, att, file);
     }).catch(function (e) {
       if (window.console) console.error('[rich_editor] upload failed:', e);

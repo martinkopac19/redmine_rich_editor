@@ -1,12 +1,13 @@
 /* Odstránenie DVOJITÉHO náhľadu obrázka.
 
    Redmine ku každej prílohe pridáva vlastný náhľad (`div.thumbnails`) — v journale hneď pod riadok
-   „File … added" a pri issue do sekcie „Files". Ak je ten istý obrázok už zobrazený v TEXTE
-   (popis/komentár), používateľ vidí to isté dvakrát.
+   „File … added" a pri issue do sekcie „Files". Ak je tá istá príloha už v TEXTE (popis/komentár),
+   používateľ vidí to isté dvakrát.
 
-   Preto: keď je príloha v texte vykreslená ako OBRÁZOK, jej natívny náhľad skryjeme. Keď je v texte
-   len ako odkaz (`attachment:file.png`, teda režim „len odkaz") alebo v texte nie je vôbec,
-   natívny náhľad NECHÁME — inak by sa obrázok nedal vidieť vôbec.
+   Pravidlo: **keď je príloha v texte spomenutá — či už ako obrázok, alebo ako odkaz — jej natívny
+   náhľad skryjeme.** Odkaz sa počíta tiež, lebo inak by režim „len odkaz" nedával zmysel: pod
+   komentárom by aj tak visel veľký náhľad a odkaz by nič neriešil. Keď príloha v texte NIE JE
+   vôbec (obyčajný priložený súbor), náhľad NECHÁME — inak by ju nebolo ako uvidieť.
 
    Skrývame len zobrazenie; DOM ani dáta nemeníme, súbor zostáva v zozname príloh. */
 
@@ -17,7 +18,7 @@ function attId(url) {
   return m ? m[1] : null;
 }
 
-// Id príloh, ktoré sú v texte na stránke vykreslené ako obrázok.
+// Id príloh, na ktoré sa text na stránke odvoláva (obrázok alebo odkaz).
 function shownInText() {
   var ids = {};
   var scopes = [];
@@ -34,6 +35,12 @@ function shownInText() {
     for (var i = 0; i < imgs.length; i++) {
       var id = attId(imgs[i].getAttribute('src')) || attId(imgs[i].getAttribute('srcset'));
       if (id) ids[id] = true;
+    }
+    // odkazy na prílohu: náš `[screenshot](https://…/attachments/123)` aj natívne `attachment:meno`
+    var links = scope.querySelectorAll('a[href]');
+    for (var j = 0; j < links.length; j++) {
+      var lid = attId(links[j].getAttribute('href'));
+      if (lid) ids[lid] = true;
     }
   });
   return ids;

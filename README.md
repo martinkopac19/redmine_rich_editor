@@ -26,6 +26,8 @@ editor simply doesn't mount and you fall back to the native textarea.
   per-image toolbar (small preview / full width / link only + preview size), and images already
   saved in a description now preview correctly in the editor. Bubble toolbar gained text size and
   block buttons (lists, checklist, code block).
+- **F5 (done):** *Link only* now produces a real, shareable link instead of a preview, and
+  `Cmd/Ctrl + K` opens a dialog that accepts a URL **or** an image pasted from the clipboard.
 
 ## Images
 
@@ -41,7 +43,7 @@ Redmine caps image **width** to the content column but not **height**. So:
   |---|---|---|
   | Small preview (clickable) | `{{thumbnail(shot.png, size=N)}}` | small thumbnail, click → full image |
   | Full width | `![](shot.png)` | inline image, full width |
-  | Link only | `attachment:shot.png` | plain text link to the attachment |
+  | Link only | `[screenshot](https://host/attachments/123)` | a plain link — **no preview at all** |
 
   `−` / `+` step the size through **200 / 350 / 500 / 650 / 800 px** — multiples of 50, because
   Redmine rounds thumbnail sizes up to the nearest 50 (and caps at 800), so what you see in the
@@ -57,10 +59,36 @@ comment, and only if the filename isn't referenced in the description or another
 irreversible; editing a comment (rather than deleting it) never removes a file.
 
 **One preview, not two.** Redmine also renders its own preview for every attached image (under the
-*"File … added"* line in the history, and in the issue's *Files* section). When the image is already
-shown in the text, that duplicate is hidden — you get the in-text preview only. It is kept when the
-image isn't in the text (a plain attachment, or *Link only* mode), so nothing becomes invisible; the
-file itself always stays listed under *Files*.
+*"File … added"* line in the history, and in the issue's *Files* section). When the text already
+refers to that attachment — as an image **or as a link** — the duplicate is hidden. It is kept only
+when the attachment isn't mentioned in the text at all (a plain attached file), so nothing becomes
+invisible; the file itself always stays listed under *Files*.
+
+## Link only, and the link dialog
+
+*Link only* turns a screenshot into a **complete, absolute link** to the attachment page, e.g.
+`https://redmine.example.com/attachments/26137`. That link can be selected, copied and sent to a
+colleague — and Redmine asks them to sign in before showing it, so screenshots with sensitive data
+stay behind the login. (An attachment in a *public* project is readable without signing in; this is
+login-gated, not a secret.)
+
+The inserted label is the word **`screenshot`**, and it is left selected, so typing replaces it with
+your own wording while keeping the link. Prefer the preview back? Select the link and use
+**Show as image** in the bubble toolbar.
+
+The URL host comes from the browser's current origin, **not** from `Setting.host_name` — a staging
+clone restored from a production dump carries the production host name, and links built from it
+would point at the wrong server.
+
+`Cmd/Ctrl + K` (or 🔗 in the bubble toolbar) opens a small dialog that takes either:
+
+- a **URL** — applied to the selected text, as before; or
+- an **image pasted or dropped straight into the dialog** — it gets uploaded, attached to the issue
+  and inserted **as a link, with no preview**.
+
+That is the second route to the same result: write the sentence first, select a word, `Cmd/Ctrl + K`,
+paste the screenshot. Readers who want to see images inline still get them from the other two modes —
+this is for the ones who would rather read text and open pictures on demand.
 
 ## Keyboard
 

@@ -30,7 +30,18 @@ module RichEditor
           imgFull: ::I18n.t(:re_img_full),
           imgLink: ::I18n.t(:re_img_link),
           imgSmaller: ::I18n.t(:re_img_smaller),
-          imgBigger: ::I18n.t(:re_img_bigger)
+          imgBigger: ::I18n.t(:re_img_bigger),
+          # dialóg odkazu (Ctrl/Cmd+K) — prijme URL aj obrázok z clipboardu
+          linkLabel: ::I18n.t(:re_link_label),
+          linkPh: ::I18n.t(:re_link_ph),
+          linkHint: ::I18n.t(:re_link_hint),
+          linkInsert: ::I18n.t(:re_link_insert),
+          linkRemove: ::I18n.t(:re_link_remove),
+          linkFile: ::I18n.t(:re_link_file),
+          linkUploading: ::I18n.t(:re_link_uploading),
+          linkFailed: ::I18n.t(:re_link_failed),
+          cancel: ::I18n.t(:re_cancel),
+          asImage: ::I18n.t(:re_as_image)
         }
       }
       out = +''

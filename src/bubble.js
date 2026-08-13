@@ -3,17 +3,14 @@
      - po kliknutí na obrázok: Malý náhľad / Plná šírka / Len odkaz + veľkosť náhľadu */
 import { NodeSelection } from '@tiptap/pm/state';
 import { THUMB_SIZES, THUMB_DEFAULT } from './md-compat.js';
-import { attUrl } from './image.js';
+import { attUrl, attIdFor } from './image.js';
+import { attachmentPageUrl, filenameForAttId } from './attachments.js';
+import { openLinkDialog, insertLinkedLabel } from './linkdialog.js';
 
 var RE_I18N = (window.RE_CONFIG || {}).i18n || {};
 
-export function promptLink(editor) {
-  var prev = editor.getAttributes('link').href || '';
-  var url = window.prompt(RE_I18N.link || 'Link (URL):', prev);
-  if (url === null) return;
-  if (url.trim() === '') { editor.chain().focus().extendMarkRange('link').unsetLink().run(); return; }
-  editor.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
-}
+// Id prílohy z URL odkazu (`/attachments/123`, aj `/attachments/download/123/meno.png`).
+var RE_ATT_HREF = /\/attachments\/(?:download\/|thumbnail\/)?(\d+)/;
 
 function mkBar() {
   var bar = document.createElement('div');
@@ -112,10 +109,35 @@ function buildTextBar(editor) {
     var el = mkBtn(bar, b.label, b.title, b.cls, function () {
       closeMenu();
       if (b.run) b.run(editor.chain().focus()).run();
-      else promptLink(editor);
+      else openLinkDialog(editor);
     }, b.name);
     stateful.push({ el: el, name: b.name });
   });
+
+  /* Cesta späť: odkaz na prílohu → obrázok. Bez toho by sa voľba „len odkaz" dala vrátiť
+     iba cez Ctrl+Z. Tlačidlo sa ukáže len vtedy, keď je výber v odkaze na prílohu, ktorej
+     názov poznáme (z `RE_CONFIG.atts` alebo z uploadu v tejto relácii). */
+  function linkedAttachment() {
+    var m = RE_ATT_HREF.exec(editor.getAttributes('link').href || '');
+    if (!m) return null;
+    var name = filenameForAttId(m[1]);
+    return name ? { id: m[1], filename: name } : null;
+  }
+
+  var bAsImage = mkBtn(bar, RE_I18N.asImage || 'Show as image', RE_I18N.asImage || 'Show as image',
+    're-label', function () {
+      var info = linkedAttachment();
+      if (!info) return;
+      editor.chain().focus().extendMarkRange('link').deleteSelection().run();
+      editor.chain().focus().insertContent({
+        type: 'image',
+        attrs: {
+          src: attUrl(info.filename, 'thumb', THUMB_DEFAULT) || info.filename,
+          filename: info.filename, alt: info.filename,
+          display: 'thumb', size: THUMB_DEFAULT, attId: info.id
+        }
+      }).run();
+    }, 'link-as-image');
 
   return {
     bar: bar,
@@ -125,6 +147,7 @@ function buildTextBar(editor) {
         if (editor.isActive(b.name)) b.el.classList.add('re-on');
         else b.el.classList.remove('re-on');
       });
+      bAsImage.style.display = linkedAttachment() ? '' : 'none';
       var lvl = 0;
       for (var i = 1; i <= 4; i++) { if (editor.isActive('heading', { level: i })) { lvl = i; break; } }
       sizeBtn.firstChild.nodeValue = lvl ? ('H' + lvl) : 'Aa';
@@ -163,13 +186,28 @@ function buildImageBar(editor) {
     editor.chain().focus().updateAttributes('image', patch).setNodeSelection(pos).run();
   }
 
+  /* „Len odkaz" — obrázok sa nahradí TEXTOM S ODKAZOM na prílohu.
+
+     Odkaz je absolútny a kompletný (`https://host/attachments/<id>`), takže sa dá označiť,
+     skopírovať a poslať kolegovi; Redmine si od neho vyžiada prihlásenie. Popisok („screenshot")
+     je rovno označený, takže ho používateľ prepíše písaním.
+
+     Fallback na pôvodné `attachment:názov` ostáva pre prípad, že by sa id prílohy nepodarilo
+     zistiť (napr. obrázok vložený mimo nášho uploadu) — vtedy je lepší funkčný Redmine odkaz
+     než nič. */
   function toLink() {
     var a = attrs();
     var name = a.filename || a.alt || '';
     if (!name) return;
-    editor.chain().focus().deleteSelection()
-      .insertContent({ type: 'text', text: 'attachment:' + name }).run();
-    editor.chain().focus().insertContent(' ').run();
+    var id = a.attId || attIdFor(name);
+    var href = attachmentPageUrl(id);
+    editor.chain().focus().deleteSelection().run();
+    if (href) {
+      insertLinkedLabel(editor, href, RE_I18N.linkLabel || 'screenshot');
+    } else {
+      editor.chain().focus().insertContent({ type: 'text', text: 'attachment:' + name }).run();
+      editor.chain().focus().insertContent(' ').run();
+    }
   }
 
   function step(dir) {

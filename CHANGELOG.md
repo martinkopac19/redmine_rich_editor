@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.9.0
+
+**"Link only" now actually produces a link.** Picking *Link only* on an image used to insert
+`attachment:shot.png` — and Redmine still rendered its own preview under the comment, so the mode
+changed nothing visible. Two fixes:
+
+- The mode now inserts a **complete absolute link** to the attachment page, e.g.
+  `[screenshot](https://redmine.example.com/attachments/26137)`. It can be copied and sent to a
+  colleague, who has to sign in to open it. This works because Redmine's upload token is
+  `<id>.<digest>` — the attachment id is known the moment the file is uploaded, long before the
+  issue is saved, so no extra endpoint and no second save are needed.
+- The native duplicate preview is now hidden whenever the text **refers** to an attachment, not only
+  when it renders one as an image. Older comments using `attachment:name` are cleaned up too.
+
+The inserted label is the word `screenshot`, left selected so typing replaces it. The link mark is
+carried across that replacement via stored marks, which `setTextSelection` would otherwise clear —
+without it, typing over the label would silently drop the link. **Show as image** in the bubble
+toolbar converts a link back into a preview.
+
+**`Cmd/Ctrl + K` is a real dialog now**, not `window.prompt`. It takes a URL as before, or an image
+**pasted or dropped into the dialog itself** — that image is uploaded, attached, and inserted as a
+link with no preview.
+
+The link host comes from the browser's origin rather than `Setting.host_name`: a clone restored from
+a production dump carries the production host name, and links built from it would point at the wrong
+server.
+
 ## 0.8.5
 
 Two bits of Redmine's form CSS were leaking into the editor:

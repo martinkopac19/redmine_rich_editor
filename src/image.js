@@ -32,6 +32,14 @@ export function attUrl(filename, display, size) {
   return a.u || null;
 }
 
+// filename → id prílohy. Pre EXISTUJÚCE prílohy ho vieme vylúpnuť z URL v `RE_CONFIG.atts`
+// (`/attachments/download/<id>/<meno>`); čerstvý upload má id priamo v atribúte uzla.
+export function attIdFor(filename) {
+  var a = atts()[filename];
+  var m = /\/attachments\/(?:download\/|thumbnail\/)?(\d+)/.exec((a && a.u) || '');
+  return m ? m[1] : null;
+}
+
 export var ReImage = Image.extend({
   addAttributes: function () {
     var parent = this.parent ? this.parent() : {};
@@ -69,6 +77,16 @@ export var ReImage = Image.extend({
           return parseInt(el.getAttribute('data-re-size'), 10) || splitMark(el.getAttribute('src')).size;
         },
         renderHTML: function (attrs) { return { 'data-re-size': attrs.size || THUMB_DEFAULT }; }
+      },
+      // Id prílohy — potrebné, keď sa obrázok prepne na režim „len odkaz" (postaví sa z neho
+      // trvalá URL). Do Markdownu NEIDE, je to len pomocná informácia v editore.
+      attId: {
+        default: null,
+        parseHTML: function (el) {
+          var name = el.getAttribute('data-filename') || splitMark(el.getAttribute('src')).filename;
+          return el.getAttribute('data-re-att-id') || attIdFor(name);
+        },
+        renderHTML: function (attrs) { return attrs.attId ? { 'data-re-att-id': attrs.attId } : {}; }
       }
     });
   },

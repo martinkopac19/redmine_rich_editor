@@ -16,7 +16,8 @@ import { preprocess } from './md-compat.js';
 import { ReHardBreak } from './hardbreak.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
-import { attachBubble, promptLink } from './bubble.js';
+import { attachBubble } from './bubble.js';
+import { openLinkDialog } from './linkdialog.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
 import { liveDescription, liveTitle, liveComments, keepLastTabCookie } from './live.js';
 import { dedupeThumbnails } from './dedupe.js';
@@ -33,7 +34,7 @@ var LinkShortcut = Extension.create({
   addKeyboardShortcuts: function () {
     var self = this;
     return {
-      'Mod-k': function () { promptLink(self.editor); return true; },
+      'Mod-k': function () { openLinkDialog(self.editor); return true; },
       'Mod-Shift-a': function () { openFilePicker(self.editor); return true; }
     };
   }

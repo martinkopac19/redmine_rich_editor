@@ -122,6 +122,34 @@
 /* náhľad obrázka v režime "malý" (aj pri novom uploade, kde je src ešte blob plnej veľkosti) */
 .re-editor .ProseMirror img[data-re-display="thumb"] { cursor: pointer; }
 
+/* dialóg odkazu (Ctrl/Cmd+K) — prijme URL aj obrázok z clipboardu */
+.re-link-dialog {
+  position: absolute; z-index: 100002; width: 380px; max-width: calc(100vw - 16px);
+  background: #fff; border: 1px solid var(--previo-grey200, #e5e5e5); border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(10,10,10,0.22); padding: 12px;
+}
+.re-link-dialog.re-drop { border-color: var(--previo-primary, #B50000); background: #FFF7F7; }
+.re-link-title { font-size: 0.8rem; font-weight: 600; color: #202124; margin-bottom: 6px; }
+.re-link-input {
+  width: 100%; box-sizing: border-box; height: 32px; padding: 0 8px;
+  border: 1px solid var(--previo-grey300, #ccc); border-radius: 6px; font-size: 0.875rem;
+}
+.re-link-input:focus { outline: none; border-color: var(--previo-primary, #B50000); }
+.re-link-hint { font-size: 0.72rem; color: var(--previo-grey500, #515151); margin-top: 6px; line-height: 1.35; }
+.re-link-status { font-size: 0.75rem; color: var(--previo-primary, #B50000); margin-top: 6px; }
+.re-link-actions { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.re-link-spacer { flex: 1 1 auto; }
+.re-link-btn {
+  background: #fff; border: 1px solid var(--previo-grey200, #e5e5e5); border-radius: 6px;
+  padding: 0 10px; height: 28px; font-size: 0.8rem; font-weight: 500; color: #202124; cursor: pointer;
+}
+.re-link-btn:hover { background: var(--previo-grey100, #f2f2f2); }
+.re-link-btn.re-primary {
+  background: var(--previo-primary, #B50000); border-color: var(--previo-primary, #B50000); color: #fff;
+}
+.re-link-btn.re-primary:hover { background: var(--previo-primary-dark, #910000); }
+.re-link-btn:disabled { opacity: 0.5; cursor: default; }
+
 /* dvojitý náhľad: obrázok už je v texte → natívny náhľad prílohy skryjeme (viď src/dedupe.js).
    `!important`, lebo natívny `showIssueHistory()` robí pri prepnutí tabu jQuery `.show()`. */
 .thumbnail.re-dupe-hidden,
