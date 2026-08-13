@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.1
+
+Self-review follow-ups on 0.9.0:
+
+- **"Show as image" no longer shows a broken image for an attachment that hasn't been saved yet.**
+  It rebuilt the preview from `RE_CONFIG.atts`, which only lists attachments that existed when the
+  page was rendered — a screenshot pasted a moment ago isn't there, and the server won't serve its
+  thumbnail either while it has no container. The blob URL created at insert time is now kept and
+  reused, with the server thumbnail path as a fallback.
+- **The link dialog clamps the selection it remembered.** An upload takes seconds, and if the
+  document changed meanwhile, `setTextSelection` would throw and the link would silently not appear.
+
+Also verified in this pass: a plain attachment that the text never mentions keeps its native
+preview (the 0.9.0 dedupe change could have hidden every image on the page), and the new link
+survives a Markdown round-trip byte for byte — a drift there would make the issue page auto-save a
+phantom description change on every visit.
+
 ## 0.9.0
 
 **"Link only" now actually produces a link.** Picking *Link only* on an image used to insert

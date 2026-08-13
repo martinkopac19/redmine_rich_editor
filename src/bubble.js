@@ -4,7 +4,7 @@
 import { NodeSelection } from '@tiptap/pm/state';
 import { THUMB_SIZES, THUMB_DEFAULT } from './md-compat.js';
 import { attUrl, attIdFor } from './image.js';
-import { attachmentPageUrl, filenameForAttId } from './attachments.js';
+import { attachmentPageUrl, filenameForAttId, previewForAttId, attachmentThumbUrl } from './attachments.js';
 import { openLinkDialog, insertLinkedLabel } from './linkdialog.js';
 
 var RE_I18N = (window.RE_CONFIG || {}).i18n || {};
@@ -129,10 +129,17 @@ function buildTextBar(editor) {
       var info = linkedAttachment();
       if (!info) return;
       editor.chain().focus().extendMarkRange('link').deleteSelection().run();
+      /* Náhľad v editore: najprv mapa uložených príloh (má správnu veľkosť), potom blob
+         z tejto relácie (príloha ešte nie je uložená → server jej náhľad nevydá) a až
+         nakoniec serverová cesta podľa id. Bez blob varianty tu bol rozbitý obrázok. */
+      var src = attUrl(info.filename, 'thumb', THUMB_DEFAULT) ||
+        previewForAttId(info.id) ||
+        attachmentThumbUrl(info.id, THUMB_DEFAULT) ||
+        info.filename;
       editor.chain().focus().insertContent({
         type: 'image',
         attrs: {
-          src: attUrl(info.filename, 'thumb', THUMB_DEFAULT) || info.filename,
+          src: src,
           filename: info.filename, alt: info.filename,
           display: 'thumb', size: THUMB_DEFAULT, attId: info.id
         }

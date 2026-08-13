@@ -64,11 +64,30 @@ export function attachmentPageUrl(id) {
   return window.location.origin + base + '/attachments/' + id;
 }
 
+// Náhľad prílohy podľa id, keď ju Redmine ešte nepozná (nie je uložená) — použije sa
+// URL náhľadu z jadra. Pre ČERSTVÝ upload toto ešte nefunguje (príloha nemá `container`,
+// takže `read_authorize` ju nepustí) — na to je registrácia blob URL nižšie.
+export function attachmentThumbUrl(id, size) {
+  if (!id) return null;
+  return base + '/attachments/thumbnail/' + id + '/' + (size || 350);
+}
+
 /* Prílohy nahraté v tejto relácii: id → filename. `RE_CONFIG.atts` obsahuje len prílohy,
    ktoré na stránke boli pri jej vykreslení — čerstvý upload v ňom nie je. */
 var uploaded = {};
 export function rememberUpload(att) {
   if (att && att.id && att.filename) uploaded[att.id] = att.filename;
+}
+
+/* Blob URL čerstvo vloženého obrázka, aby sa dal náhľad OBNOVIŤ po prepnutí na „len odkaz".
+   Bez tohto by „Show as image" pri ešte neuloženej prílohe ukázal rozbitý obrázok: v mape
+   `RE_CONFIG.atts` nie je a serverový náhľad ju bez `container` nevydá. */
+var previews = {};
+export function rememberPreview(id, url) {
+  if (id && url && /^blob:/i.test(url)) previews[id] = url;
+}
+export function previewForAttId(id) {
+  return (id && previews[id]) || null;
 }
 export function filenameForAttId(id) {
   if (!id) return null;
@@ -156,6 +175,7 @@ function insertRef(editor, att, file) {
   if (!isImage(att)) { insertAttachmentLink(editor, att); return Promise.resolve(); }
   var src = att.filename;
   try { if (file) src = URL.createObjectURL(file); } catch (e) {}
+  rememberPreview(att.id, src);
   var canThumb = thumbnailable(att);
   return (canThumb && src !== att.filename ? measure(src) : Promise.resolve({ w: 0, h: 0 }))
     .then(function (dim) {

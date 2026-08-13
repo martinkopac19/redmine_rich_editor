@@ -32,8 +32,18 @@ export function insertLinkedLabel(editor, href, label) {
     .run();
 }
 
+/* Výber si pamätáme od otvorenia dialógu, ale medzitým sa dokument mohol zmeniť (upload trvá
+   sekundy). Mimo rozsahu by `setTextSelection` hodilo RangeError a odkaz by sa ticho nevložil. */
+function clamp(editor, range) {
+  if (!range) return null;
+  var max = editor.state.doc.content.size;
+  var from = Math.max(0, Math.min(range.from, max));
+  return { from: from, to: Math.max(from, Math.min(range.to, max)) };
+}
+
 // Naviaže odkaz na označený text, alebo (ak nič označené nie je) vloží popisok s odkazom.
 export function applyLink(editor, href, range, label) {
+  range = clamp(editor, range);
   var hasSel = range && range.to > range.from;
   if (hasSel) {
     editor.chain().focus().setTextSelection(range).extendMarkRange('link')
@@ -163,7 +173,7 @@ function build() {
   bRemove.addEventListener('click', function () {
     if (!ctx) return close();
     var editor = ctx.editor;
-    editor.chain().focus().setTextSelection({ from: ctx.from, to: ctx.to })
+    editor.chain().focus().setTextSelection(clamp(editor, { from: ctx.from, to: ctx.to }))
       .extendMarkRange('link').unsetLink().run();
     close();
   });
@@ -177,7 +187,7 @@ function confirm() {
   var editor = ctx.editor, range = { from: ctx.from, to: ctx.to };
   close();
   if (!url) {
-    editor.chain().focus().setTextSelection(range).extendMarkRange('link').unsetLink().run();
+    editor.chain().focus().setTextSelection(clamp(editor, range)).extendMarkRange('link').unsetLink().run();
     return;
   }
   // popisok pri prázdnom výbere = samotná URL (pri ručne písanom odkaze je to čitateľnejšie
