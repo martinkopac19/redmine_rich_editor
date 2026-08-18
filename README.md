@@ -147,4 +147,6 @@ npm run build   # -> assets/javascripts/rich_editor.bundle.js
 
 ## License
 
+Copyright (C) 2026 Martin Kopáč
+
 GPL-2.0.
