@@ -44,7 +44,12 @@ function extensions() {
   return [
     StarterKit.configure({ heading: { levels: [1, 2, 3, 4] }, hardBreak: false }),
     ReHardBreak,
-    Link.configure({ openOnClick: false, autolink: true }),
+    /* `openOnClick` je zapnuté zámerne: na detaile issue tento editor NAHRÁDZA vyrenderovaný
+       popis (F3), takže je to jediná plocha, kde človek odkaz vidí — keby ho klik neotvoril,
+       odkazy v popise by boli mŕtve. Otvára sa do nového panela (`target=_blank` je default
+       rozšírenia), takže sa nepríde o rozpísaný text. Kurzor sa tým do odkazu myšou nedostane
+       → upraviť ho ide cez lištu, ktorá vyskočí pri prejdení myšou (viď bubble.js). */
+    Link.configure({ openOnClick: true, autolink: true }),
     TaskList,
     TaskItem.configure({ nested: true }),
     Table.configure({ resizable: false }),

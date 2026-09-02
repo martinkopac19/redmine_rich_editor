@@ -28,3 +28,5 @@ en:
   re_link_failed: "Upload failed"
   re_cancel: "Cancel"
   re_as_image: "Show as image"
+  re_open_link: "Open"
+  re_edit_link: "Edit link"

@@ -28,3 +28,5 @@ cs:
   re_link_failed: "Nahrání selhalo"
   re_cancel: "Zrušit"
   re_as_image: "Zobrazit jako obrázek"
+  re_open_link: "Otevřít"
+  re_edit_link: "Upravit odkaz"

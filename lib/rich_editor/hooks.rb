@@ -41,7 +41,10 @@ module RichEditor
           linkUploading: ::I18n.t(:re_link_uploading),
           linkFailed: ::I18n.t(:re_link_failed),
           cancel: ::I18n.t(:re_cancel),
-          asImage: ::I18n.t(:re_as_image)
+          asImage: ::I18n.t(:re_as_image),
+          # lišta nad odkazom (prejdenie myšou / kurzor v odkaze)
+          openLink: ::I18n.t(:re_open_link),
+          editLink: ::I18n.t(:re_edit_link)
         }
       }
       out = +''

@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.9.3
+
+**Links in the editor can be opened again, and a link bar makes them editable.** On the issue page
+this editor *replaces* the rendered description, so it is the only place where a reader sees a link
+— and a click did nothing, because the editor swallowed it. Three changes:
+
+- **A click opens the link** (`openOnClick`), in a new tab, so nothing typed gets lost.
+- **Hovering a link shows a bar** with *Open*, *Edit link* and — for an attachment link — *Show as
+  image*. Until now that last one only appeared in the text bar, which needs a non-empty selection,
+  so undoing *Link only* meant selecting the link text by hand and hoping. The bar also shows when
+  the caret sits in a link, and it works while the editor is not focused, which is the normal state
+  when someone is just reading an issue.
+- **The hover state is released when the link disappears.** Converting the hovered link back to an
+  image removes the element without a `mouseout`, so the bubble logic thought the mouse was still
+  over a link and stopped showing any bar at all. It now re-checks that the link mark is still
+  there.
+
+Verified in a headless browser on both the new-issue form and the issue page (live description):
+13 checks, including that the click opens exactly the href, that *Show as image* restores an image
+node, and that the bars are not stuck afterwards.
+
 ## 0.9.2
 
 **The first line of the editor no longer starts a blank row below the top border.** Redmine's core

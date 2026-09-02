@@ -104,6 +104,14 @@
 .re-bubble-btn:disabled:hover { background: transparent; }
 .re-bubble-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.22); margin: 0 3px; }
 .re-bubble-caret { font-size: 0.6rem; font-weight: 400; margin-left: 3px; opacity: 0.75; }
+/* lišta nad odkazom: vľavo samotná URL (len na prečítanie, celá je v tooltipe) */
+.re-bubble-url {
+  color: rgba(255,255,255,0.75); font-size: 0.78rem; font-weight: 400;
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 4px 0 6px;
+}
+/* odkaz sa klikom otvára → nech to kurzor myši prezradí (inak vyzerá ako bežný text v editore) */
+.re-editor .ProseMirror a { cursor: pointer; }
 
 /* dropdown veľkosti textu (vnútri lišty, aby fokus neodišiel) */
 .re-bubble-menu {
