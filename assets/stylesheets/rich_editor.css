@@ -10,13 +10,16 @@
 .re-editor .ProseMirror:focus { outline: none; }
 .re-editor .ProseMirror > *:first-child { margin-top: 0; }
 /* reset presakujúceho Redmine formulárového CSS (.tabular p { padding-left:180px;
-   min-height:28px; padding:3px 0 } a pod.) — inak má prvý riadok divnú medzeru navrchu */
+   min-height:28px; padding:3px 0; clear:left } a pod.) — inak má prvý riadok divnú medzeru navrchu.
+   Najviditeľnejšie je "clear:left": popisok poľa (.tabular label) je plávajúci,
+   takže prvý odstavec editora sa odsunul až pod jeho spodnú hranu a navrchu rámčeka vznikla
+   mŕtva medzera vysoká ako popisok (~21 px), do ktorej sa nedalo kliknúť ani písať. */
 .re-editor .ProseMirror p,
 .re-editor .ProseMirror h1, .re-editor .ProseMirror h2,
 .re-editor .ProseMirror h3, .re-editor .ProseMirror h4,
 .re-editor .ProseMirror blockquote,
 .re-editor .ProseMirror pre,
-.re-editor .ProseMirror ul, .re-editor .ProseMirror ol { padding: 0; min-height: 0; }
+.re-editor .ProseMirror ul, .re-editor .ProseMirror ol { padding: 0; min-height: 0; clear: none; }
 .re-editor .ProseMirror p { margin: 0 0 8px; }
 /* Nadpisy sa líšia LEN veľkosťou písma, vždy bold. Redmine globálne nastavuje
    `h4 { border-bottom: 1px solid #ccc; font-weight: normal }` a `h1..h6 { color:#555 }`

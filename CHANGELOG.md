@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.2
+
+**The first line of the editor no longer starts a blank row below the top border.** Redmine's core
+form CSS sets `clear: left` on every `.tabular p`, which also matched the paragraphs *inside* the
+editor. The field label is floated, so the first paragraph was pushed below it and the top of the
+box became dead space as tall as the label (~21 px) — clicking it did nothing, because there was no
+text line to land in. The reset that already undid the other leaks from that rule now also sets
+`clear: none`.
+
 ## 0.9.1
 
 Self-review follow-ups on 0.9.0:
