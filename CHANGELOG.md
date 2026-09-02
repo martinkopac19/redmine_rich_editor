@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.10.0
+
+**One edit now leaves one history entry and one notification.** Paste an image, switch it to
+*Link only* a moment later, and you used to get two entries in the history and two e-mails about
+the same thing. Redmine has no journal aggregation at all — every save is a new entry and a new
+notification — so this is fixed on both sides.
+
+**Client — the editor saves once per edit, not once per keystroke burst:**
+
+- Leaving the field is now the trigger; the idle timer is only a 10-second fallback (it used to
+  be the 2-second main trigger, which is why the save landed before you could click *Link only*).
+- Both timers are one timer, so a save on blur can no longer be followed 1.3 s later by an
+  identical second POST.
+- **Nothing is sent when nothing changed.** Clicking into the description and back out used to
+  save — Redmine keeps an empty `attachments[dummy][file]` field in the form at all times, and
+  that alone was enough to look like a pending change.
+- Saving is deferred while an upload is in flight, so an attachment is never attached before the
+  text that references it.
+- Leaving the page flushes the pending change with `sendBeacon` (`fetch` is cancelled when the
+  page goes away), and a native *Submit* cancels the pending save instead of racing it.
+
+**Server — consecutive live edits fold into the previous entry.** Within the merge window
+(default 10 minutes), when the same user edits again and both entries only carry a description,
+a subject or an added attachment, the change is folded into the previous entry and no second
+notification is sent. A comment in between, another user, a status change, a normal form save,
+the REST API and bulk edits are all left exactly as Redmine does them. Both the merging and the
+window are configurable, and turning it off restores the original behaviour completely.
+This needs no core patch — it runs from the native `controller_issues_edit_after_save` hook,
+inside the same transaction as the save.
+
+**Also fixed:** the live title was never mirrored into the form’s hidden subject field, so
+renaming an issue in the editor and then clicking *Submit* by hand brought the old title back.
+
+Verified with 13 server-side checks (`extra/selftest_merge.rb`, everything inside a transaction
+that is rolled back, mail delivery switched to `:test`) and 10 browser checks
+(`extra/savetest_browser.js`, POSTs stubbed, three identical runs).
+
 ## 0.9.3
 
 **Links in the editor can be opened again, and a link bar makes them editable.** On the issue page

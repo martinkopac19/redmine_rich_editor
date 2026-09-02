@@ -5,4 +5,16 @@
     <%= check_box_tag 'settings[enabled]', '1', settings['enabled'].to_s != '0' %>
     <em class="info"><%= l(:re_setting_enabled_hint) %></em>
   </p>
+  <p>
+    <label for="merge_live_edits"><%= l(:re_setting_merge) %></label>
+    <%= hidden_field_tag 'settings[merge_live_edits]', '0', id: nil %>
+    <%= check_box_tag 'settings[merge_live_edits]', '1', settings['merge_live_edits'].to_s != '0' %>
+    <em class="info"><%= l(:re_setting_merge_hint) %></em>
+  </p>
+  <p>
+    <label for="merge_window_minutes"><%= l(:re_setting_merge_window) %></label>
+    <%= text_field_tag 'settings[merge_window_minutes]',
+                       (settings['merge_window_minutes'].presence || '10'), size: 4 %>
+    <em class="info"><%= l(:re_setting_merge_window_hint) %></em>
+  </p>
 </div>

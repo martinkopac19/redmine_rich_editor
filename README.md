@@ -112,6 +112,28 @@ Notion-only features that Redmine's Markdown/sanitizer can't represent — under
 collapsible sections, video auto-embeds, date mentions, Figma previews — are intentionally
 out of scope.
 
+## Saving and history
+
+The live editor saves by itself, so it has to be careful not to turn one edit into several
+history entries — Redmine has no journal aggregation, so every save is a new entry and a new
+notification. Two mechanisms keep that in check:
+
+- **On the client**, a save is triggered when you leave the field, with a 10-second idle
+  fallback while you keep typing, and nothing is sent when the content has not actually
+  changed. An upload in flight defers the save until the reference is in the text, and
+  leaving the page flushes the pending change via `sendBeacon`.
+- **On the server**, when a live save lands within the merge window (default 10 minutes) after
+  the same user’s previous entry, and both entries only touch the description, the subject or
+  an added attachment, the change is folded into that entry — leaving one entry (original →
+  final) and one notification. Anything else — a comment in between, another user, a status
+  change, a normal form save, the REST API — is left exactly as Redmine does it.
+
+Both can be turned off in *Administration → Plugins → Rich Editor*. One caveat worth knowing:
+the first notification is sent immediately, so if you keep editing, the full description quoted
+at the bottom of that e-mail can show an intermediate state. The change line itself is a link to
+the diff, and that diff always shows the final state.
+
+
 ## Requirements
 
 - Redmine **6.0+** (`text_formatting = common_mark`).

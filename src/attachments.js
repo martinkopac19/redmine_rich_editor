@@ -195,24 +195,38 @@ function insertRef(editor, att, file) {
 /* Nahrá súbor a priviaže ho na formulár (skryté `attachments[]` polia), ale NIČ nevkladá
    do textu — vloženie si rieši volajúci. Používa to aj dialóg odkazu (Ctrl+K), kde sa
    z prilepeného obrázka robí odkaz, nie náhľad. */
+/* Koľko uploadov práve beží. Auto-save sa v tomto okne musí odložiť: skryté `attachments[…]`
+   polia pridáva `addFormFields` do formulára HNEĎ po nahratí, ale referencia v texte sa vkladá
+   až potom (obrázok navyše čaká na `measure`, timeout 4 s). Uloženie medzitým prílohu k issue
+   pripne skôr, než na ňu v texte existuje odkaz — a je z toho záznam v histórii navyše. */
+var uploadsBusy = 0;
+function uploadBegin() { uploadsBusy++; }
+function uploadEnd() { if (uploadsBusy > 0) uploadsBusy--; }
+export function uploadsPending() { return uploadsBusy > 0; }
+
 export function uploadAndAttach(editor, file) {
   var form = targetForm(editor);
   if (!form && window.console) console.warn('[rich_editor] no form for attachments — upload would not be attached');
+  uploadBegin();
   return uploadFile(file).then(function (att) {
     addFormFields(form, att);
     rememberUpload(att);
+    uploadEnd();
     return att;
-  });
+  }, function (e) { uploadEnd(); throw e; });
 }
 
 export function handleFiles(editor, files) {
   if (!files || !files.length) return;
   Array.prototype.forEach.call(files, function (file) {
+    // Počítadlo drží cez CELÝ cyklus, teda aj cez vloženie referencie do textu, nielen cez POST.
+    // Vnorené počítanie s `uploadAndAttach` nevadí — je to počítadlo, nie prepínač.
+    uploadBegin();
     uploadAndAttach(editor, file).then(function (att) {
       return insertRef(editor, att, file);
     }).catch(function (e) {
       if (window.console) console.error('[rich_editor] upload failed:', e);
-    });
+    }).then(uploadEnd, uploadEnd);
   });
 }
 
