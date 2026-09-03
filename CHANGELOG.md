@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.11.0
+
+**Text emoticons now become the emoji you meant.** Typing `:D` used to produce 😢 and `:O`
+produced 😄 — nonsense that came from the `:` autocomplete treating the letter after the colon
+as a search term. It searched keywords too, so `d` first matched *cry* (keyword "sad") and `o`
+matched *smile* (keyword "joy").
+
+- Emoticons are converted while you type, the way Google Chat does it: the emoji appears once you
+  type the space after it, so nothing changes under your hands mid-word. 59 patterns —
+  `:D :) :( ;) :P :O XD <3 </3 >:( O:) }:) (y) (n) ^_^ T_T` and their `:-` variants.
+- The autocomplete no longer opens for a single character that forms an emoticon (`:D`, `:O`,
+  `:P`…), so its first entry can no longer be accepted by accident. Real searches of two
+  characters or more (`:dog`) are unaffected.
+- When you do search, results are ranked by how closely they match: exact name first, then names
+  starting with the query, then keywords. Previously any substring hit anywhere counted equally.
+- Times like `12:30` and URLs are left alone.
+- The same emoticon table lives in the redmine_emoji_picker plugin, which handles plain
+  textareas; both were aligned so the two behave identically.
+
 ## 0.10.0
 
 **One edit now leaves one history entry and one notification.** Paste an image, switch it to

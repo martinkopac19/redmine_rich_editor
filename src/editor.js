@@ -16,6 +16,7 @@ import { preprocess } from './md-compat.js';
 import { ReHardBreak } from './hardbreak.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
+import { EmoticonRules } from './emoticons.js';
 import { attachBubble } from './bubble.js';
 import { openLinkDialog } from './linkdialog.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
@@ -59,6 +60,7 @@ function extensions() {
     SlashCommand,
     IssueSuggest,
     EmojiSuggest,
+    EmoticonRules,
     MentionSuggest,
     LinkShortcut,
     Markdown.configure({ html: false, linkify: false, breaks: true, transformPastedText: true })

@@ -4,6 +4,7 @@ import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import { PluginKey } from '@tiptap/pm/state';
 import { EMOJI } from './emoji-data.js';
+import { isEmoticonTail } from './emoticons.js';
 
 var CFG = window.RE_CONFIG || {};
 var base = CFG.base || '';
@@ -111,13 +112,42 @@ export var EmojiSuggest = Extension.create({
       char: ':',
       allowSpaces: false,
       startOfLine: false,
-      allow: wordStartAllow,
+      /* Popup sa pri emotikone nesmie ani otvoriť. Vrátiť z `items` prázdne pole
+         NESTAČÍ — renderer v takom prípade vykreslí hlášku „No emoji", takže
+         `:O` síce nevložilo nezmysel, ale zobrazilo prázdne okno. */
+      allow: function (props) {
+        if (!wordStartAllow(props)) return false;
+        var txt = props.state.doc.textBetween(props.range.from, props.range.to, '', '');
+        return !isEmoticonTail(txt.replace(/^:/, ''));
+      },
       items: function (props) {
         var q = (props.query || '').toLowerCase();
         if (!q) return EMOJI_DEFAULTS; // hneď po `:` ukáž prvé návrhy
-        return EMOJI.filter(function (e) {
-          return e.n.indexOf(q) >= 0 || (e.k && e.k.indexOf(q) >= 0);
-        }).slice(0, 8);
+
+        /* `:D`, `:O`, `:P`… nie je hľadanie, ale emotikon — popup by doň len
+           zavadzal a jeho prvá položka sa dala omylom potvrdiť. Premenu na emoji
+           robia input rules (emoticons.js). Dopyty od dvoch znakov (`:dog`)
+           to neobmedzuje. */
+        if (isEmoticonTail(props.query || '')) return []; // poistka, ak by `allow` neprebehol
+
+        /* Poradie podľa toho, ako tesne to sedí. Predtým sa filtrovalo obyčajným
+           `indexOf` cez názov aj kľúčové slová, takže `:d` vrátilo ako prvé `cry`
+           (kľúčové slovo „sad") a `:o` zase `smile` (cez „joy"). */
+        function rank(e) {
+          if (e.n === q) return 0;                                   // presný názov
+          if (e.n.indexOf(q) === 0) return 1;                        // názov začína dopytom
+          var kw = (e.k || '').split(/s+/);
+          if (kw.indexOf(q) >= 0) return 2;                          // presné kľúčové slovo
+          if (kw.some(function (w) { return w.indexOf(q) === 0; })) return 3; // kľúčové slovo začína
+          if (e.n.indexOf(q) > 0) return 4;                          // niekde v názve
+          return 5;                                                  // niekde v kľúčových slovách
+        }
+        return EMOJI
+          .filter(function (e) { return e.n.indexOf(q) >= 0 || (e.k && e.k.indexOf(q) >= 0); })
+          .map(function (e, i) { return { e: e, r: rank(e), i: i }; })
+          .sort(function (a, b) { return a.r - b.r || a.i - b.i; })  // pri zhode pôvodné poradie
+          .slice(0, 8)
+          .map(function (x) { return x.e; });
       },
       command: function (props) {
         props.editor.chain().focus().deleteRange(props.range).insertContent(props.props.c + ' ').run();
