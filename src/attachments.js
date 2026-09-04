@@ -110,6 +110,33 @@ function targetForm(editor) {
   return (dom && dom.closest('form')) || document.getElementById('issue-form') || null;
 }
 
+/* Úprava UŽ EXISTUJÚCEHO komentára ide cez `PUT /journals/:id`, a ten prílohy neprijíma —
+   `JournalsController#update` pozná len `notes` a `private_notes`. Súbor by sa nahral, skryté
+   `attachments[…]` polia by sa pridali do formulára a server by ich ticho zahodil: v texte by
+   ostal odkaz na prílohu, ktorá neexistuje. Natívny Redmine v tomto formulári prílohy tiež
+   neponúka, takže sa tu zámerne nedajú pridávať ani nám. */
+function attachmentsAllowed(editor) {
+  var form = targetForm(editor);
+  return !(form && /^journal-\d+-form$/.test(form.id || ''));
+}
+
+function noAttachMessage() {
+  var i18n = (window.RE_CONFIG || {}).i18n || {};
+  return i18n.noAttach || 'Files cannot be added while editing an existing comment.';
+}
+
+// Tichý neúspech je horší než žiadna funkcia — povedz to nad editorom a po chvíli uprac.
+function noAttachNotice(editor) {
+  var dom = editor.view && editor.view.dom;
+  var wrap = dom && dom.closest('.re-editor');
+  if (!wrap || wrap.querySelector('.re-attach-note')) return;
+  var el = document.createElement('div');
+  el.className = 're-attach-note';
+  el.textContent = noAttachMessage();
+  wrap.appendChild(el);
+  setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 5000);
+}
+
 // Obrázok z clipboardu má v prehliadači vždy generický názov („image.png") → viac screenshotov
 // v jednom issue by sa prekrývalo (Redmine rieši duplicitné názvy cez `Attachment.latest_attach`).
 // Prepíšeme ho rovnakou konvenciou, akú používa natívny Redmine: `clipboard-YYYYMMDDhhmm-xxxxx.ext`.
@@ -205,6 +232,9 @@ function uploadEnd() { if (uploadsBusy > 0) uploadsBusy--; }
 export function uploadsPending() { return uploadsBusy > 0; }
 
 export function uploadAndAttach(editor, file) {
+  // Dialóg odkazu (Ctrl+K) si chybu vypíše sám z `e.message`, preto tu notice netreba.
+  if (!attachmentsAllowed(editor)) return Promise.reject(new Error(noAttachMessage()));
+
   var form = targetForm(editor);
   if (!form && window.console) console.warn('[rich_editor] no form for attachments — upload would not be attached');
   uploadBegin();
@@ -218,6 +248,7 @@ export function uploadAndAttach(editor, file) {
 
 export function handleFiles(editor, files) {
   if (!files || !files.length) return;
+  if (!attachmentsAllowed(editor)) { noAttachNotice(editor); return; }
   Array.prototype.forEach.call(files, function (file) {
     // Počítadlo drží cez CELÝ cyklus, teda aj cez vloženie referencie do textu, nielen cez POST.
     // Vnorené počítanie s `uploadAndAttach` nevadí — je to počítadlo, nie prepínač.
@@ -232,6 +263,8 @@ export function handleFiles(editor, files) {
 
 // Otvorenie výberu súborov (Cmd/Ctrl+Shift+A alebo /file). Perzistentný input per editor.
 export function openFilePicker(editor) {
+  if (!attachmentsAllowed(editor)) { noAttachNotice(editor); return; }
+
   var input = editor.__reFileInput;
   if (!input) {
     input = document.createElement('input');

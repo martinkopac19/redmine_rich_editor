@@ -26,8 +26,31 @@ import { dedupeThumbnails } from './dedupe.js';
 var CFG = window.RE_CONFIG || {};
 var I = CFG.i18n || {};
 
-// Ktoré textarey preberáme (dlhodobo stabilné Redmine id-čka).
-var SELECTOR = 'textarea#issue_description, textarea#issue_notes';
+/* Ktoré textarey preberáme (dlhodobo stabilné Redmine id-čka).
+   `journal_<id>_notes` je formulár úpravy existujúceho komentára
+   (`app/views/journals/_notes_form.html.erb`) — do stránky ho doplní až AJAX po kliknutí
+   na ceruzku, takže ho nájde MutationObserver, nie prvý scan. Na `[id$="_notes"]` sa chytá
+   aj `journal_<id>_private_notes`, ale to je checkbox, nie textarea. */
+var SELECTOR = 'textarea#issue_description, textarea#issue_notes, textarea[id^="journal_"][id$="_notes"]';
+
+function isJournalNotes(textarea) {
+  return /^journal_\d+_notes$/.test(textarea.id || '');
+}
+
+/* Formulár úpravy komentára Redmine po uložení aj po zrušení celý odstráni z DOM
+   (`journals/update.js.erb`, resp. `onclick` na tlačidle Cancel). Editor by tým ostal
+   visieť aj s listenermi a pri každom ďalšom kliknutí na ceruzku by pribudol ďalší. */
+var JOURNAL_EDITORS = [];
+
+function reapDetached() {
+  for (var i = JOURNAL_EDITORS.length - 1; i >= 0; i--) {
+    var ed = JOURNAL_EDITORS[i];
+    var el = ed.options && ed.options.element;
+    if (el && el.isConnected) continue;
+    JOURNAL_EDITORS.splice(i, 1);
+    try { ed.destroy(); } catch (e) {}
+  }
+}
 
 // Cmd/Ctrl+K = odkaz nad označeným textom.
 var LinkShortcut = Extension.create({
@@ -150,6 +173,9 @@ function mountOver(textarea) {
     if (textarea.id === 'issue_notes' && document.getElementById('history')) {
       try { liveComments(editor, textarea); } catch (e) {}
     }
+    // Úprava existujúceho komentára: uloženie rieši natívne tlačidlo Save vo formulári
+    // (textarea je zdroj pravdy), my si len pamätáme editor, aby sa dal po zavretí zahodiť.
+    if (isJournalNotes(textarea)) JOURNAL_EDITORS.push(editor);
   } catch (e) {
     // NEopakovať mount pri zlyhaní (inak observer spustí storm) → natívny fallback
     textarea.dataset.reMounted = 'failed';
@@ -160,6 +186,7 @@ function mountOver(textarea) {
 }
 
 function scan() {
+  reapDetached();
   var list = document.querySelectorAll(SELECTOR);
   for (var i = 0; i < list.length; i++) mountOver(list[i]);
   // obrázok, ktorý je už v texte, nemusí mať aj natívny náhľad pod ním

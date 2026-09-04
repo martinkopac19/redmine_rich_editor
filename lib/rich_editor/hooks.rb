@@ -40,6 +40,8 @@ module RichEditor
           linkFile: ::I18n.t(:re_link_file),
           linkUploading: ::I18n.t(:re_link_uploading),
           linkFailed: ::I18n.t(:re_link_failed),
+          # úprava existujúceho komentára ide cez PUT /journals/:id, ktorý prílohy neprijíma
+          noAttach: ::I18n.t(:re_no_attach),
           cancel: ::I18n.t(:re_cancel),
           asImage: ::I18n.t(:re_as_image),
           # lišta nad odkazom (prejdenie myšou / kurzor v odkaze)

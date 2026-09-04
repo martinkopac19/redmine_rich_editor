@@ -30,6 +30,7 @@ sk:
   re_as_image: "Zobraziť ako obrázok"
   re_open_link: "Otvoriť"
   re_edit_link: "Upraviť odkaz"
+  re_no_attach: "Do úpravy existujúceho komentára sa súbory pridať nedajú — pridaj ich novým komentárom."
   re_setting_merge: "Zlučovať nadväzujúce živé úpravy"
   re_setting_merge_hint: "Keď živý editor uloží tú istú úlohu znova počas nižšie uvedeného okna, zmena sa vleje do predchádzajúceho záznamu histórie namiesto vytvorenia nového — z rýchleho sledu úprav tak zostane jeden záznam a jedna notifikácia. Platí len pre živý editor; bežné uloženie formulára má vždy vlastný záznam."
   re_setting_merge_window: "Okno na zlučovanie (minúty)"

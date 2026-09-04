@@ -28,6 +28,25 @@ editor simply doesn't mount and you fall back to the native textarea.
   block buttons (lists, checklist, code block).
 - **F5 (done):** *Link only* now produces a real, shareable link instead of a preview, and
   `Cmd/Ctrl + K` opens a dialog that accepts a URL **or** an image pasted from the clipboard.
+- **F6 (done):** the pencil on an existing comment opens this editor instead of Redmine's old
+  toolbar widget — see *Editing an existing comment* below.
+
+## Editing an existing comment
+
+The pencil next to a comment in the history used to open Redmine's own toolbar-and-textarea
+widget, which was the only place on the issue page where none of this worked. It now opens the
+same editor as *Add comment*.
+
+**Permissions are untouched.** The plugin does not render the pencil, does not serve the form
+and does not save anything of its own: the form comes from `GET /journals/:id/edit` and the save
+is Redmine's native `PUT /journals/:id`, both already gated by `Journal#editable_by?`. All the
+plugin does is upgrade a textarea Redmine had already decided to show.
+
+**Files cannot be added here.** `JournalsController#update` accepts only `notes` and
+`private_notes`, so an upload would be silently dropped and the text would point at an
+attachment that does not exist. Native Redmine offers no attachments in this form either.
+Dropping, pasting or `Cmd/Ctrl + Shift + A` says so rather than pretending to work — add the
+file in a new comment instead.
 
 ## Images
 
@@ -163,8 +182,9 @@ npm run build   # -> assets/javascripts/rich_editor.bundle.js
 
 - A view hook (`view_layouts_base_html_head` / `_body_bottom`) injects the CSS/JS and a tiny
   `RE_CONFIG`.
-- The editor mounts over `textarea#issue_description` / `#issue_notes`, hides the textarea and
-  keeps it as the source of truth: every change is serialised to Markdown back into it.
+- The editor mounts over `textarea#issue_description` / `#issue_notes` / `#journal_<id>_notes`,
+  hides the textarea and keeps it as the source of truth: every change is serialised to Markdown
+  back into it. The journal form arrives by AJAX, so a `MutationObserver` picks it up.
 - Saving uses Redmine's own endpoints, so journals and permissions are unchanged.
 
 ## License

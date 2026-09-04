@@ -30,6 +30,7 @@ en:
   re_as_image: "Show as image"
   re_open_link: "Open"
   re_edit_link: "Edit link"
+  re_no_attach: "Files cannot be added while editing an existing comment — add them in a new comment."
   re_setting_merge: "Merge consecutive live edits"
   re_setting_merge_hint: "When the live editor saves the same issue again within the window below, the change is folded into the previous history entry instead of adding a new one — so a quick sequence of edits leaves one entry and one notification. Applies only to the live editor; a normal form save always creates its own entry."
   re_setting_merge_window: "Merge window (minutes)"

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.12.0
+
+**Editing an existing comment now uses the rich editor too.** Clicking the pencil on a comment
+in the history opened Redmine's old toolbar-and-textarea widget — the one place on the issue
+page where none of the new editing worked. It now opens the same editor as *Add comment* and
+the description: formatting as you type, `/` for blocks, `#123`, `@mentions`, emoji and
+emoticons, links with Ctrl/Cmd+K.
+
+- Who may edit a comment has not changed by one line. The pencil is still rendered only by
+  Redmine, the form still comes from `GET /journals/:id/edit`, and saving still goes through
+  `PUT /journals/:id` — all three already check `Journal#editable_by?`. The plugin only
+  upgrades a textarea that Redmine had already decided to show.
+- **Files still cannot be added while editing an existing comment**, because
+  `JournalsController#update` accepts only `notes` and `private_notes` and would silently drop
+  the upload, leaving the text pointing at an attachment that does not exist. Native Redmine
+  offers no attachments in this form either. Dropping, pasting or `Ctrl/Cmd+Shift+A` now says
+  so instead of appearing to work. Add the file in a new comment.
+- The editor is discarded when the form closes, so repeatedly opening and cancelling the pencil
+  no longer piles up editor instances on the page.
+
 ## 0.11.0
 
 **Text emoticons now become the emoji you meant.** Typing `:D` used to produce 😢 and `:O`

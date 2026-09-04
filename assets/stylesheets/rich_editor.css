@@ -204,3 +204,15 @@
 .re-slash-item { padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; color: #202124; }
 .re-slash-item.re-active { background: #F9EBEB; color: var(--previo-primary, #B50000); }
 .re-slash-empty { padding: 8px 10px; color: var(--previo-grey400, #b2b2b2); font-size: 0.85rem; }
+
+/* Hláška, že do úpravy existujúceho komentára sa prílohy pridať nedajú
+   (PUT /journals/:id ich neprijíma). Krátkodobá, mizne sama po 5 s. */
+.re-attach-note {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border-radius: var(--previo-radius, 8px);
+  background: #fdf3d8;
+  color: #7a5b00;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
