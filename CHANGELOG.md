@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.13.0
+
+**Checkboxes in a saved comment can be ticked without opening the comment for editing.**
+Redmine renders task lists as `disabled` checkboxes everywhere, so a checklist written in a
+comment could only be ticked through the pencil — and that is the author's alone. A shared
+checklist in a comment was dead for everybody else.
+
+- **Who may tick:** anyone who may add a comment to the issue, via the core
+  `Issue#notes_addable?` — so roles limited to a tracker and closed projects are respected, and
+  a private comment can only be ticked by someone allowed to see it. Read-only access still
+  sees the checkbox locked. The server enforces this independently of the page: a hand-made
+  request from someone without the permission is refused with 403.
+- **The request carries no text.** Only the checkbox's position, the total count and its
+  previous state travel to the server, so the endpoint cannot rewrite a comment even if asked
+  to — the one thing it can do is flip a single character between the square brackets. That is
+  what makes it safe to open to people who may not edit the comment. Redmine's own
+  `PUT /journals/:id` is no use here: it is gated to the author and accepts arbitrary text.
+- **The comment does not start claiming "· edited".** `updated_by`/`updated_on` stay untouched,
+  because an edit marker would read as if someone had rewritten the content. The tick goes to
+  the server log. It also adds no issue-history entry — a ten-item checklist would otherwise
+  produce ten of them.
+- **Nothing is written when the marker order is uncertain.** The `[ ]` markers found in the
+  Markdown are cross-checked against the number of checkboxes the renderer really produces, and
+  against what the browser saw at click time. If they disagree — an indented code block, a
+  macro, or someone editing the comment in the meantime — the request is refused with 409 and
+  the checkbox springs back with a hint to reload rather than ticking the wrong line.
+- The click handler is delegated from `document` rather than attached to each checkbox. Attaching
+  per element broke as soon as the history was redrawn through `innerHTML`: that serialises the
+  plugin's own marker attribute, so the new checkboxes arrived looking unlocked but with no
+  handler — clicks did nothing and silently failed to save. Found by test, not in review.
+
 ## 0.12.0
 
 **Editing an existing comment now uses the rich editor too.** Clicking the pencil on a comment

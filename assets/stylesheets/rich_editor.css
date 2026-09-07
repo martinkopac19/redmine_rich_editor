@@ -216,3 +216,11 @@
   font-size: 0.9em;
   line-height: 1.4;
 }
+
+/* Zaškrtávanie checkboxov v uloženom komentári. Redmine ich renderuje ako `disabled`,
+   plugin ich odblokuje (`tasks.js`) — takže musia aj vyzerať klikateľne. */
+.wiki input.task-list-item-checkbox.re-task-live { cursor: pointer; }
+.wiki input.task-list-item-checkbox.re-task-failed {
+  outline: 2px solid #d9534f;
+  outline-offset: 1px;
+}

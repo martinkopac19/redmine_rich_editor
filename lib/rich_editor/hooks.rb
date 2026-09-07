@@ -13,6 +13,10 @@ module RichEditor
         meId: User.current.id,
         projectId: (eff_project ? eff_project.id : nil),
         atts: attachment_map(issue),
+        # Smie tento človek zaškrtávať checkboxy v komentároch tejto úlohy? Bez toho by JS
+        # políčka odblokoval každému a klik by skončil na 403 — políčko by sa zaškrtlo a hneď
+        # vrátilo. Rozhodujúce slovo má aj tak server, toto je len UI.
+        taskToggle: (issue ? issue.notes_addable?(User.current) : false),
         i18n: {
           placeholder: ::I18n.t(:re_ph),
           link: ::I18n.t(:re_link_prompt),
@@ -46,7 +50,10 @@ module RichEditor
           asImage: ::I18n.t(:re_as_image),
           # lišta nad odkazom (prejdenie myšou / kurzor v odkaze)
           openLink: ::I18n.t(:re_open_link),
-          editLink: ::I18n.t(:re_edit_link)
+          editLink: ::I18n.t(:re_edit_link),
+          # zaškrtnutie checkboxu v uloženom komentári
+          taskFailed: ::I18n.t(:re_task_failed),
+          taskStale: ::I18n.t(:re_task_stale)
         }
       }
       out = +''

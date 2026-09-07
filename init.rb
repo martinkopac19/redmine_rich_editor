@@ -4,6 +4,7 @@
 # Aj zlučovanie záznamov histórie ide cez natívny hook `controller_issues_edit_after_save`.
 
 require_relative 'lib/rich_editor/hooks'
+require_relative 'lib/rich_editor/task_toggle'
 require_relative 'lib/rich_editor/journal_hooks'
 require_relative 'lib/rich_editor/merge_hooks'
 
@@ -12,7 +13,7 @@ Redmine::Plugin.register :redmine_rich_editor do
   author 'Martin Kopáč'
   description 'Linear-style inline WYSIWYG editor for issue title, description and comments. ' \
               'Text-area backed, round-trips to Markdown, preserves journals and permissions.'
-  version '0.12.0'
+  version '0.13.0'
   url 'https://github.com/martinkopac19/redmine_rich_editor'
   requires_redmine version_or_higher: '6.0'
 

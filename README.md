@@ -30,6 +30,35 @@ editor simply doesn't mount and you fall back to the native textarea.
   `Cmd/Ctrl + K` opens a dialog that accepts a URL **or** an image pasted from the clipboard.
 - **F6 (done):** the pencil on an existing comment opens this editor instead of Redmine's old
   toolbar widget — see *Editing an existing comment* below.
+- **F7 (done):** checkboxes in a **saved comment** can be ticked by anyone who may comment on
+  the issue, without opening the comment for editing — see *Ticking checkboxes in a comment*.
+
+## Ticking checkboxes in a comment
+
+Redmine renders task lists (`- [ ] item`) as **disabled** checkboxes everywhere, so a checklist
+written in a comment could only be ticked by opening the comment for editing — and that is
+limited to its author. A shared checklist in a comment was therefore dead for everyone else.
+
+Checkboxes inside a comment are now live: click one and it is saved. What that costs in
+permissions is deliberately narrow:
+
+- **Who may tick:** anyone who may add a comment to the issue (`add_issue_notes`, through the
+  core `Issue#notes_addable?`, so roles limited to a tracker and closed projects are respected).
+  A private comment can only be ticked by someone allowed to see it. People with read-only
+  access still see the checkbox locked, exactly as before.
+- **What can change:** one character between the square brackets, and nothing else. The request
+  carries the checkbox's position and its previous state — **never any text** — so the endpoint
+  has no way to rewrite the comment even if asked to.
+- **No edit marker.** Ticking does not touch `updated_by`/`updated_on`, so the comment does not
+  start claiming "· edited"; that would read as if someone had rewritten its content. The tick
+  goes to the server log instead. It also adds no entry to the issue history — a ten-item
+  checklist would otherwise produce ten of them.
+- **Nothing is written when the order is uncertain.** The position of a `[ ]` marker in the
+  Markdown is cross-checked against what the renderer actually produces; if the two disagree
+  (an indented code block, a macro) or the comment changed since the page was loaded, the
+  request is refused with 409 and the checkbox springs back with a hint to reload.
+
+`POST /rich_editor/journals/:id/task` — `index`, `total`, `checked`, `from`.
 
 ## Editing an existing comment
 
@@ -185,7 +214,34 @@ npm run build   # -> assets/javascripts/rich_editor.bundle.js
 - The editor mounts over `textarea#issue_description` / `#issue_notes` / `#journal_<id>_notes`,
   hides the textarea and keeps it as the source of truth: every change is serialised to Markdown
   back into it. The journal form arrives by AJAX, so a `MutationObserver` picks it up.
-- Saving uses Redmine's own endpoints, so journals and permissions are unchanged.
+- Saving uses Redmine's own endpoints, so journals and permissions are unchanged. The single
+  exception is ticking a checkbox in a saved comment: Redmine has no endpoint that would let
+  a non-author change one character, so the plugin adds `POST /rich_editor/journals/:id/task`.
+
+## Tests
+
+```
+# checkbox in a saved comment: marker logic, permissions, silent write (28 checks)
+bin/rails runner -e production plugins/redmine_rich_editor/extra/task_selftest.rb
+
+# merging consecutive live edits
+bin/rails runner -e production plugins/redmine_rich_editor/extra/selftest_merge.rb
+```
+
+Browser tests drive a headless Edge/Chrome over CDP and need a live Redmine — a `file://` copy
+of the page is not enough, because the journal form and the save are both server round-trips.
+`extra/task_fixture.rb setup|reset|teardown` creates and removes the users, roles and the issue
+they need.
+
+```
+node extra/task_toggle_cdp_test.mjs <base> <login> <pass> <issueId> <journalId> toggle   # 17
+node extra/task_toggle_cdp_test.mjs <base> <login> <pass> <issueId> <journalId> readonly #  6
+node extra/journal_edit_cdp_test.mjs <base> <login> <pass> <issueId> <journalId>         # 14
+```
+
+The checkbox test deliberately runs under a role that may comment but **may not edit comments**
+(Viewer). Run as an admin it would pass even with the endpoint broken, because an admin has the
+pencil anyway.
 
 ## License
 

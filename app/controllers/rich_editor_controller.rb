@@ -1,5 +1,5 @@
-# Malý endpoint pre @mention autocomplete. Vracia login + meno; vloženie `@login` do textu
-# spustí natívnu Redmine mention notifikáciu pri uložení. Len čítanie, len prihlásený.
+# Endpointy pluginu: @mention autocomplete (čítanie) a zaškrtnutie checkboxu v uloženom
+# komentári (zápis jedného znaku). Oboje len pre prihláseného.
 class RichEditorController < ApplicationController
   before_action :require_login
 
@@ -26,7 +26,43 @@ class RichEditorController < ApplicationController
     render json: users.map { |u| { login: u.login, name: u.name } }
   end
 
+  # Zaškrtnutie/odškrtnutie jedného checkboxu v už uloženom komentári.
+  #
+  # Zámerne to NEIDE cez `PUT /journals/:id`: ten pustí dovnútra len autora komentára
+  # (`Journal#editable_by?`) a prijme akýkoľvek text. Tu smie zaškrtnúť každý, kto na úlohu
+  # môže komentovať, a jediná možná zmena je prepis jedného znaku medzi hranatými zátvorkami —
+  # text komentára sa z requestu neprijíma vôbec, len poradové číslo políčka.
+  #
+  # `update_columns` je úmyselné: obchádza callbacky aj `updated_on`, takže komentár nezačne
+  # hlásiť „· edited" (to by vyzeralo, akoby niekto prepísal jeho obsah).
+  def toggle_task
+    journal = Journal.visible.find(params[:id])
+    return render_task_error(:forbidden, :forbidden) unless RichEditor::TaskToggle.allowed?(journal, User.current)
+
+    new_text, err = RichEditor::TaskToggle.apply(
+      journal.notes,
+      index: params[:index].to_i,
+      checked: params[:checked].to_s == '1',
+      from: params[:from].to_s == '1',
+      total: params[:total].to_i
+    )
+    return render_task_error(:conflict, err) if err
+
+    journal.update_columns(notes: new_text) if new_text != journal.notes
+    Rails.logger.info(
+      "[rich_editor] task toggled: journal=#{journal.id} index=#{params[:index].to_i} " \
+      "checked=#{params[:checked]} by=#{User.current.login}"
+    )
+    render json: { ok: true }
+  rescue ActiveRecord::RecordNotFound
+    render_task_error(:not_found, :not_found)
+  end
+
   private
+
+  def render_task_error(status, reason)
+    render json: { ok: false, reason: reason.to_s }, status: status
+  end
 
   # DB-agnostický CONCAT mena (PostgreSQL na tejto inštancii, ale nech je to prenosné).
   def concat_name_sql

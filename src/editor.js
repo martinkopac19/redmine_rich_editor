@@ -22,6 +22,7 @@ import { openLinkDialog } from './linkdialog.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
 import { liveDescription, liveTitle, liveComments, keepLastTabCookie } from './live.js';
 import { dedupeThumbnails } from './dedupe.js';
+import { enableJournalTasks } from './tasks.js';
 
 var CFG = window.RE_CONFIG || {};
 var I = CFG.i18n || {};
@@ -191,6 +192,8 @@ function scan() {
   for (var i = 0; i < list.length; i++) mountOver(list[i]);
   // obrázok, ktorý je už v texte, nemusí mať aj natívny náhľad pod ním
   try { dedupeThumbnails(); } catch (e) {}
+  // checkboxy v uložených komentároch (Redmine ich renderuje ako disabled)
+  try { enableJournalTasks(); } catch (e) {}
 }
 
 // Debounce: MutationObserver nesmie spúšťať scan() pri každej mutácii.
