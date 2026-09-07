@@ -181,6 +181,27 @@ the first notification is sent immediately, so if you keep editing, the full des
 at the bottom of that e-mail can show an intermediate state. The change line itself is a link to
 the diff, and that diff always shows the final state.
 
+### Reloading a few seconds after you stop typing
+
+**The edit is not lost, but the first page you get back does not show it yet.** Measured on a
+live instance (`extra/live_reload_probe.mjs`), reloading 1 s and 4 s after the last keystroke:
+
+- the `sendBeacon` goes out and the new description **is** in the database, with its history
+  entry — nothing is lost;
+- but the reload's `GET` and that beacon travel **at the same time**, and the `GET` wins, so the
+  page is rendered from the state before the save;
+- **a second reload shows the new text.**
+
+Two things follow from it. Clicking anywhere outside the editor before reloading avoids it
+entirely — leaving the field saves after 400 ms, well before the navigation starts. And the
+page you get back holds the **older** text in the editor, so if you keep typing in it and that
+saves, it overwrites the rescued change with no warning.
+
+Left as is deliberately (decision of 7 Sep 2026): the 10-second idle is what keeps one edit
+from becoming a row of history entries, and the data is safe. If it ever becomes annoying, the
+two ways out are a shorter `IDLE_MS` in `src/live.js` (the merge window folds the extra saves
+into one entry anyway) or reconciling the page after load against what the beacon sent.
+
 
 ## Requirements
 
