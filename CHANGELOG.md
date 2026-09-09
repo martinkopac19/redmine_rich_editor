@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.14.0
+
+**A comment or a new issue you started writing survives a page reload.**
+
+Reported case: the description of an existing issue saves itself, but text typed into a
+comment or into the new-issue form was lost on reload. The cause is different from the
+description, and so is the fix: those two have **nowhere on the server to save to**.
+Saving a comment means adding it to the history and mailing everyone who watches the
+issue; saving a new issue means creating it. Neither may happen on its own — the whole
+point of this plugin is that the person clicks the button.
+
+- The text is therefore kept **in the browser** (`sessionStorage`) and put back into the
+  editor when the page loads again. Nothing is sent anywhere, nothing is created, nobody
+  gets a notification.
+- **`sessionStorage`, not `localStorage`** (decided 9 Sep 2026): the draft survives a
+  reload and clicking around Redmine, but dies with the tab. On a shared computer nobody
+  finds a half-written comment left behind by the previous person.
+- **Restored automatically**, but only into an *empty* editor — text that is already on the
+  page is never overwritten.
+- A draft is **tied to its place**: a comment to its issue, a new issue to its project. Text
+  from one issue can never surface on another.
+- Cleared when the comment is actually submitted, when the new-issue form is submitted, and
+  when the person empties the field themselves.
+- On the new-issue form the draft is restored **once per page load**, not on every redraw.
+  Changing the tracker rebuilds the form from the server and inserts that tracker's
+  description template — restoring the draft again would overwrite the template the person
+  just asked for.
+- Redmine 6.1.3 has no draft mechanism of its own (only the `warnLeavingUnsaved` "Leave
+  site?" prompt, which saves nothing), so there was nothing to hook into.
+- New test `extra/draft_cdp_test.mjs` — 13 checks against a live Redmine with real key
+  events: the draft survives one reload and a second one, submitting clears it (so the
+  comment cannot be posted twice), and both the subject and the description of a new issue
+  come back.
+
 ## 0.13.0
 
 **Checkboxes in a saved comment can be ticked without opening the comment for editing.**

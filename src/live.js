@@ -1,6 +1,7 @@
 /* F3 — live inline editovanie na detaile issue (auto-save cez AJAX existujúceho #issue-form).
    POZOR: toto je najviac naviazané na Redmine DOM (menej upgrade-safe) → všade fallback. */
 import { uploadsPending } from './attachments.js';
+import { notesKey, newIssueKey, issueIdFromPath, readDraft, clearDraft, debouncedSaver } from './draft.js';
 
 function csrf() {
   var m = document.querySelector('meta[name="csrf-token"]');
@@ -375,6 +376,27 @@ export function liveComments(editor, textarea) {
   box.appendChild(btn);
   var ind = makeIndicator(box);
 
+  /* Rozpísaný komentár sa na server uložiť NEDÁ — bol by z neho komentár aj
+   * s notifikáciami. Drží sa preto v prehliadači, viď draft.js. */
+  var dkey = notesKey(issueIdFromPath());
+  if (dkey) {
+    editor.on('update', debouncedSaver(dkey, function () {
+      return { notes: textarea.value || '' };
+    }));
+
+    /* Obnovuje sa automaticky, ale LEN do prázdneho editora — text, ktorý je
+     * práve na stránke, sa nikdy neprepíše. */
+    var draft = readDraft(dkey);
+    if (draft && draft.notes && !(textarea.value || '').trim()) {
+      try {
+        // `true` = emitni update. Bez toho zostane textarea prázdna a Submit
+        // pošle nič — tá istá pasca ako pri čistení po odoslaní (v0.8.1).
+        editor.commands.setContent(draft.notes, true);
+        if (!(textarea.value || '').trim()) textarea.value = draft.notes;
+      } catch (e) {}
+    }
+  }
+
   btn.addEventListener('click', function () {
     var val = (textarea.value || '').trim();
     if (!val) return;
@@ -412,7 +434,54 @@ export function liveComments(editor, textarea) {
       // by v textarei zostal starý text a druhý klik na „Add comment" by poslal duplikát.
       editor.commands.setContent('', true);
       if ((textarea.value || '').trim()) textarea.value = '';
+      // Komentár je odoslaný → koncept už nie je čo obnovovať.
+      if (dkey) clearDraft(dkey);
       ind.saved();
     }).catch(function () { btn.disabled = false; ind.failed(); });
   });
+}
+
+/* FORMULÁR NOVEJ ÚLOHY: úloha ešte neexistuje, takže nie je kam ukladať —
+ * rozpísaný názov a popis sa držia v prehliadači (draft.js).
+ *
+ * Obnovuje sa LEN RAZ za načítanie stránky. Zmena trackera prekreslí
+ * `#all_attributes` zo servera a vloží šablónu popisu daného trackera; keby
+ * sme koncept obnovovali aj vtedy, prepísal by šablónu, ktorú si človek práve
+ * vyžiadal. Pri prvom načítaní má naopak vyhrať koncept — je to jeho práca. */
+var newIssueRestored = false;
+
+export function draftNewIssue(editor, textarea) {
+  var form = issueForm();
+  if (!form) return;
+
+  var cfg = window.RE_CONFIG || {};
+  var key = newIssueKey(cfg.projectId);
+  var subject = document.getElementById('issue_subject');
+  var save = debouncedSaver(key, function () {
+    return { subject: subject ? (subject.value || '') : '', description: textarea.value || '' };
+  });
+
+  editor.on('update', save);
+  if (subject) subject.addEventListener('input', save);
+
+  /* Po odoslaní formulára úloha vzniká (alebo sa vráti s chybou a vyplnenými
+   * hodnotami zo servera) — koncept v oboch prípadoch dosluhuje. */
+  form.addEventListener('submit', function () { clearDraft(key); });
+
+  if (newIssueRestored) return;
+  newIssueRestored = true;
+
+  var draft = readDraft(key);
+  if (!draft) return;
+
+  /* Šablóna trackera sa do textarey vkladá až po mounte editora (plugin
+   * issue_templates nastavuje `.value` priamo), takže koncept sa vracia
+   * s malým odkladom — inak by ho šablóna prepísala. */
+  setTimeout(function () {
+    try {
+      if (draft.description) editor.commands.setContent(draft.description, true);
+      if (draft.description && !(textarea.value || '').trim()) textarea.value = draft.description;
+      if (draft.subject && subject && !(subject.value || '').trim()) subject.value = draft.subject;
+    } catch (e) {}
+  }, 700);
 }

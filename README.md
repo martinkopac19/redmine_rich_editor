@@ -202,6 +202,34 @@ from becoming a row of history entries, and the data is safe. If it ever becomes
 two ways out are a shorter `IDLE_MS` in `src/live.js` (the merge window folds the extra saves
 into one entry anyway) or reconciling the page after load against what the beacon sent.
 
+### A comment or a new issue you started writing (since v0.14.0)
+
+Auto-save above applies to the **description and the subject of an existing issue** — there is
+a server to save to and a history entry to write. A **comment** and a **new issue** have
+neither: saving a comment means posting it and mailing the watchers, saving a new issue means
+creating it. Neither may happen without the person clicking the button.
+
+Text typed into those two is therefore kept **in the browser** and put back into the editor
+when the page loads again (`src/draft.js`). Nothing is sent anywhere.
+
+- **`sessionStorage`, not `localStorage`** (decision of 9 Sep 2026). It survives a reload and
+  clicking around Redmine, but dies with the tab, so a shared computer does not keep a
+  half-written comment for the next person.
+- **Restored automatically, but only into an empty editor** — text already on the page is
+  never overwritten.
+- **Tied to its place**: a comment to its issue (`re.draft.notes.<id>`), a new issue to its
+  project (`re.draft.newissue.<id>`). Text from one issue cannot surface on another.
+- Cleared when the comment is submitted, when the new-issue form is submitted, or when the
+  field is emptied by hand.
+- On the new-issue form it is restored **once per page load**. Changing the tracker rebuilds
+  the form from the server and inserts that tracker's description template; restoring the
+  draft again would overwrite the template the person just asked for. For the same reason the
+  restore runs with a short delay — the template is written into the textarea after the editor
+  mounts, so without it the template would win.
+
+> Redmine 6.1.3 has no draft mechanism to hook into. The only thing it does is the
+> `warnLeavingUnsaved` "Leave site?" prompt, which saves nothing.
+
 
 ## Requirements
 
@@ -244,6 +272,9 @@ npm run build   # -> assets/javascripts/rich_editor.bundle.js
 ```
 # checkbox in a saved comment: marker logic, permissions, silent write (28 checks)
 bin/rails runner -e production plugins/redmine_rich_editor/extra/task_selftest.rb
+
+# a comment / new issue you started writing survives a reload (13 checks)
+node extra/draft_cdp_test.mjs <base> <login> <password> <issueId> <projectId> [port]
 
 # merging consecutive live edits
 bin/rails runner -e production plugins/redmine_rich_editor/extra/selftest_merge.rb

@@ -20,7 +20,7 @@ import { EmoticonRules } from './emoticons.js';
 import { attachBubble } from './bubble.js';
 import { openLinkDialog } from './linkdialog.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
-import { liveDescription, liveTitle, liveComments, keepLastTabCookie } from './live.js';
+import { liveDescription, liveTitle, liveComments, keepLastTabCookie, draftNewIssue } from './live.js';
 import { dedupeThumbnails } from './dedupe.js';
 import { enableJournalTasks } from './tasks.js';
 
@@ -173,6 +173,13 @@ function mountOver(textarea) {
     }
     if (textarea.id === 'issue_notes' && document.getElementById('history')) {
       try { liveComments(editor, textarea); } catch (e) {}
+    }
+    /* Formular NOVEJ ulohy: nie je kam ukladat (uloha este nie je), takze
+       rozpisany nazov a popis sa drzia v prehliadaci. Rozlisenie od detailu
+       je `#issue_description_wiki` — ten existuje len na detaile. */
+    if (textarea.id === 'issue_description' && !document.getElementById('issue_description_wiki') &&
+        /\/issues\/new\/?$/.test(String(window.location.pathname))) {
+      try { draftNewIssue(editor, textarea); } catch (e) {}
     }
     // Úprava existujúceho komentára: uloženie rieši natívne tlačidlo Save vo formulári
     // (textarea je zdroj pravdy), my si len pamätáme editor, aby sa dal po zavretí zahodiť.
