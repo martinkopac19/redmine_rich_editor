@@ -144,6 +144,7 @@ this is for the ones who would rather read text and open pictures on demand.
 |-----|--------|
 | `Cmd/Ctrl + B` / `I` | Bold / italic |
 | `Cmd/Ctrl + K` | Insert link — **when text is selected** |
+| `Cmd/Ctrl + Enter` | **Submit the comment** (in the comment bar) |
 | `Cmd/Ctrl + Shift + A` | Attach a file |
 | `/` | Block palette |
 | `#` / `@` / `:` | Issue link / mention / emoji |
@@ -152,6 +153,14 @@ this is for the ones who would rather read text and open pictures on demand.
 a link; with no selection — or outside the editor — it opens the
 [command palette](https://github.com/martinkopac19/redmine_command_palette) (**0.4.1+** required
 for this split; `Cmd/Ctrl + Shift + K` always opens the palette).
+
+`Cmd/Ctrl + Enter` submits the comment from the comment bar under the history — the same thing
+as clicking *Add comment*, so an empty comment is not sent and the draft is cleared afterwards.
+Plain `Enter` and `Shift + Enter` keep making new lines. **It is deliberately not `Cmd/Ctrl + K`**
+(which was the original request): that key already inserts a link inside the editor and opens the
+palette outside it, and a third meaning on the same key would leave nobody able to predict what it
+does. `Enter` is also the convention in Linear, GitHub, Slack and Jira. Editing an *existing*
+comment through the pencil keeps its native Save button and no shortcut.
 
 ## Scope
 
@@ -272,6 +281,9 @@ npm run build   # -> assets/javascripts/rich_editor.bundle.js
 ```
 # checkbox in a saved comment: marker logic, permissions, silent write (28 checks)
 bin/rails runner -e production plugins/redmine_rich_editor/extra/task_selftest.rb
+
+# Cmd/Ctrl+Enter submits the comment (11 checks)
+node extra/comment_shortcut_cdp_test.mjs <base> <login> <password> <issueId> [port]
 
 # a comment / new issue you started writing survives a reload (13 checks)
 node extra/draft_cdp_test.mjs <base> <login> <password> <issueId> <projectId> [port]

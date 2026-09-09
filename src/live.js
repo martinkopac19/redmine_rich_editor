@@ -373,8 +373,27 @@ export function liveComments(editor, textarea) {
   btn.type = 'button';
   btn.className = 're-comment-submit';
   btn.textContent = i18n.addComment || 'Add comment';
+  /* Skratka patrí do tooltipu, inak o nej nikto nevie. Skladá sa v JS, aby
+   * nepotrebovala vlastný preklad — názov tlačidla už preložený je. */
+  var modLabel = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '') ? '⌘' : 'Ctrl';
+  btn.title = (i18n.addComment || 'Add comment') + ' (' + modLabel + '+Enter)';
   box.appendChild(btn);
   var ind = makeIndicator(box);
+
+  /* Cmd/Ctrl+Enter odošle komentár. ZÁMERNE nie Cmd/Ctrl+K: to v editore
+   * otvára dialóg odkazu (editor.js `Mod-k`) a mimo editora paletu — tretia
+   * funkcia na tej istej klávese by znamenala, že nikto nevie, čo spraví.
+   * Enter je navyše konvencia z Linearu, GitHubu aj Slacku.
+   *
+   * Listener visí na obale editora, nie na dokumente: skratka má platiť len
+   * keď človek píše komentár, nie kdekoľvek na stránke. `altKey` je vylúčený
+   * kvôli AltGr (na českej a slovenskej klávesnici je to ctrl+alt). */
+  box.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.altKey || e.shiftKey) return;
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    if (!btn.disabled) btn.click();
+  });
 
   /* Rozpísaný komentár sa na server uložiť NEDÁ — bol by z neho komentár aj
    * s notifikáciami. Drží sa preto v prehliadači, viď draft.js. */

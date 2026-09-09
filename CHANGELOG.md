@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.15.0
+
+**`Cmd/Ctrl + Enter` submits the comment.** Same as clicking *Add comment*: an empty comment
+is not sent, the draft is cleared afterwards, and plain `Enter` / `Shift + Enter` keep making
+new lines. The shortcut is in the button's tooltip, so it is discoverable without being told.
+
+**It is deliberately not `Cmd/Ctrl + K`,** which is what was originally asked for. That key is
+already taken twice: inside the editor it opens the link dialog (`editor.js` `Mod-k`, the
+feature that replaced the CloudShoot workaround in v0.9.0), and outside it opens the command
+palette. A third meaning on the same key would mean nobody could predict what it does, and in
+a comment the link shortcut would have been lost. `Enter` was free — verified against Redmine
+core as well — and is the convention in Linear, GitHub, Slack and Jira.
+
+- The listener sits on the comment bar, not on the document: the shortcut applies while writing
+  a comment, not anywhere on the page.
+- `altKey` is excluded because **AltGr is ctrl+alt** on Czech and Slovak keyboards — the same
+  trap the command palette hit with its own shortcut.
+- Editing an *existing* comment through the pencil keeps its native Save button; that form is
+  Redmine's own and the plugin only upgrades its textarea.
+- New test `extra/comment_shortcut_cdp_test.mjs` — 11 checks with real key events, including
+  that `Ctrl+K` in a comment does **not** submit it (so the link dialog stayed intact) and that
+  `Enter` alone still makes a new line.
+
 ## 0.14.0
 
 **A comment or a new issue you started writing survives a page reload.**
