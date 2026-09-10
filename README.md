@@ -282,6 +282,9 @@ npm run build   # -> assets/javascripts/rich_editor.bundle.js
 # checkbox in a saved comment: marker logic, permissions, silent write (28 checks)
 bin/rails runner -e production plugins/redmine_rich_editor/extra/task_selftest.rb
 
+# inline code is applied and visible (12 checks)
+node extra/inlinecode_cdp_test.mjs <base> <login> <password> <issueId> [port]
+
 # Cmd/Ctrl+Enter submits the comment (11 checks)
 node extra/comment_shortcut_cdp_test.mjs <base> <login> <password> <issueId> [port]
 

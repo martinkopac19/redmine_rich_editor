@@ -46,6 +46,20 @@
   font-family: monospace; margin: 0 0 8px;
 }
 .re-editor .ProseMirror code { font-family: monospace; }
+/* Inline code musí v editore vyzerať ako po uložení. Jadro dáva vyrenderovanému
+   `code` jemné pozadie (`div.wiki *:not(pre)>code` v application.css), do editora
+   to nesiaha — takže jediný rozdiel po kliknutí na `</>` bol monospace font,
+   a pri krátkom slove to čítalo ako „tlačidlo nič nerobí". Hodnoty sú zámerne tie
+   isté ako v jadre, aby editor ukazoval to, čo uvidí čitateľ.
+   `:not(pre)` je tu z rovnakého dôvodu ako v jadre: text v bloku kódu už má
+   pozadie celého bloku a druhé by sa v ňom kreslilo navyše. */
+.re-editor .ProseMirror *:not(pre) > code,
+.re-editor .ProseMirror > code {
+  background: rgba(62, 91, 118, 0.08);
+  padding: 0.1em 0.1em;
+  border-radius: 0.1em;
+  white-space: pre-wrap;
+}
 .re-editor .ProseMirror hr { border: none; border-top: 2px solid var(--previo-grey200, #e5e5e5); margin: 12px 0; }
 .re-editor .ProseMirror img { max-width: 100%; height: auto; border-radius: 4px; }
 .re-editor .ProseMirror img.ProseMirror-selectednode { outline: 2px solid var(--previo-primary, #B50000); }

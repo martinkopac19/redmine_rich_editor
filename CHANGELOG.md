@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.15.1
+
+**Inline code (`</>`) is now visible in the editor.** Reported as "the inline code format does
+not seem to do anything at all".
+
+It did work — measured on a live instance: the `<code>` mark was applied and the Markdown came
+out as `` `word` ``. It just could not be *seen*. Redmine styles inline code only in **rendered**
+text (`div.wiki *:not(pre)>code` gives it a faint background), and that does not reach into the
+editor, where the only rule was `font-family: monospace`. Since core already sets a monospace
+family on every `code` element, clicking `</>` changed nothing on screen.
+
+- The editor now uses **the same background, padding and radius as core**, so it shows what the
+  reader will see — the same principle that fixed the headings in v0.8.5.
+- `:not(pre)` is there for the same reason as in core: text inside a code block already has the
+  block's background and a second one would be drawn on top of it.
+- New test `extra/inlinecode_cdp_test.mjs` — 12 checks against a live Redmine: the mark is
+  applied, the Markdown has backticks, the background is not transparent, it matches what core
+  gives rendered text, and code inside a code block does **not** get a second background.
+- `extra/inlinecode_debug.mjs` records the measurement. **Its lesson is worth keeping:** there
+  are several bubble toolbars in the DOM (one per editor) and clicking a button in the wrong one
+  applies nothing — the first attempt at diagnosing this reported "the button does nothing"
+  purely because of that.
+
 ## 0.15.0
 
 **`Cmd/Ctrl + Enter` submits the comment.** Same as clicking *Add comment*: an empty comment
