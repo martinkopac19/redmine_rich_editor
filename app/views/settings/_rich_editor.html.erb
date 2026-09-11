@@ -13,8 +13,11 @@
   </p>
   <p>
     <label for="merge_window_minutes"><%= l(:re_setting_merge_window) %></label>
+    <%# Efektívna hodnota, nie len `settings[...]`. Redmine posiela do partialu ULOŽENÝ hash
+        z DB a `merge_window_minutes` v ňom na našich instanciách chýba — políčko by potom
+        ukazovalo niečo iné, než čo reálne platí (rovnaká pasca ako v ai_assistant 0.6.4). %>
     <%= text_field_tag 'settings[merge_window_minutes]',
-                       (settings['merge_window_minutes'].presence || '10'), size: 4 %>
+                       (RichEditor::LiveMerge.window.to_i / 60).to_s, size: 4 %>
     <em class="info"><%= l(:re_setting_merge_window_hint) %></em>
   </p>
 </div>

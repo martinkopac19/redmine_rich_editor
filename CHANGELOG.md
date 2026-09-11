@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.15.2
+
+**The merge window for live description/subject edits is now 30 minutes instead of 10.**
+Requested: people keep coming back to a description over a longer stretch than ten minutes, and
+each return past the window started a new history entry and a new notification.
+
+- `LiveMerge.window` fallback, the `init.rb` default and the setting hint (en/sk/cs) all moved
+  from 10 to 30. The upper bound stays 60, unchanged.
+- **Where the change actually lands:** the plugin setting row in the database holds only
+  `enabled` on both the clone and the test server, so `merge_window_minutes` was never stored and
+  the effective value came from the code fallback — not from `init.rb`. Nothing needs to be
+  clicked in Administration.
+- The settings field now renders **the effective value** (`LiveMerge.window`) rather than the
+  stored hash, which would have shown a stale 10 for a key that is not in the database. Same
+  trap as `ai_assistant` 0.6.4.
+- Scope is unchanged: only live saves (`re_live=1`) of **description, subject and added
+  attachments** by **the same user**, with no comment involved. A normal form save, a bulk edit
+  or the REST API still gets its own entry.
+
 ## 0.15.1
 
 **Inline code (`</>`) is now visible in the editor.** Reported as "the inline code format does

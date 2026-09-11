@@ -34,6 +34,6 @@ cs:
   re_setting_merge: "Slučovat navazující živé úpravy"
   re_setting_merge_hint: "Když živý editor uloží stejný úkol znovu během níže uvedeného okna, změna se vlije do předchozího záznamu historie místo vytvoření nového — z rychlého sledu úprav tak zůstane jeden záznam a jedna notifikace. Platí jen pro živý editor; běžné uložení formuláře má vždy vlastní záznam."
   re_setting_merge_window: "Okno pro slučování (minuty)"
-  re_setting_merge_window_hint: "Měří se od vzniku předchozího záznamu, takže se jeden záznam nikdy nepřepisuje déle. 1–60, výchozí 10."
+  re_setting_merge_window_hint: "Měří se od vzniku předchozího záznamu, takže se jeden záznam nikdy nepřepisuje déle. 1–60, výchozí 30."
   re_task_failed: "Zaškrtnutí se nepodařilo uložit"
   re_task_stale: "Komentář se mezitím změnil — načti stránku znovu"

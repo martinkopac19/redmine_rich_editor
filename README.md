@@ -179,7 +179,7 @@ notification. Two mechanisms keep that in check:
   fallback while you keep typing, and nothing is sent when the content has not actually
   changed. An upload in flight defers the save until the reference is in the text, and
   leaving the page flushes the pending change via `sendBeacon`.
-- **On the server**, when a live save lands within the merge window (default 10 minutes) after
+- **On the server**, when a live save lands within the merge window (default 30 minutes) after
   the same user’s previous entry, and both entries only touch the description, the subject or
   an added attachment, the change is folded into that entry — leaving one entry (original →
   final) and one notification. Anything else — a comment in between, another user, a status

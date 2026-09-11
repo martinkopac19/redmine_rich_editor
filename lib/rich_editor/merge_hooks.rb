@@ -34,14 +34,15 @@ module RichEditor
 
     # POZOR: pluginové nastavenia sa po pridaní nového kľúča NEDOPLNIA do už uloženého riadku
     # v `settings` — default sa použije len keď riadok neexistuje. Preto všade vlastný fallback
-    # (chýbajúci kľúč = zapnuté / 10 minút).
+    # (chýbajúci kľúč = zapnuté / 30 minút). Na klone aj na testovacom serveri je v DB uložené
+    # len `enabled`, takže o dĺžke okna reálne rozhoduje TENTO fallback, nie default v `init.rb`.
     def enabled?
       settings['enabled'].to_s != '0' && settings['merge_live_edits'].to_s != '0'
     end
 
     def window
       m = settings['merge_window_minutes'].to_i
-      m = 10 if m <= 0
+      m = 30 if m <= 0
       m.clamp(1, 60).minutes
     end
 
