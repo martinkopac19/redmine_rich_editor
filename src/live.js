@@ -102,6 +102,41 @@ function makeIndicator(host) {
   };
 }
 
+/* Výmena histórie za čerstvú verziu z odpovede servera.
+
+   Živé uloženie popisu/názvu vyrobí v DB záznam „Popis aktualizován (rozdíl)", ale na stránke
+   sa nič nezmení — užívateľ ho uvidí až po refreshi. Odpoveď na náš POST je pritom celá show
+   stránka, takže históriu z nej stačí vymeniť.
+
+   Fokus to nevezme: `#history` je samostatný podstrom, editor popisu sedí hore pri `.description`
+   a lišta komentára je SÚRODENEC `#history` (`insertBefore(box, host.nextSibling)`), nie jeho
+   potomok. Rozpísaný komentár teda výmena nezahodí ani keď autosave popisu dobehne uprostred
+   písania.
+
+   Prekreslenie histórie si všimne MutationObserver v `editor.js` a prebehne `scan()`, ktorý
+   znova spustí `dedupeThumbnails()` a `enableJournalTasks()`. */
+function swapHistory(html) {
+  var ch = document.getElementById('history');
+  if (!ch || !html) return false;
+  var doc = null;
+  try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch (e) { return false; }
+  var nh = doc && doc.getElementById('history');
+  if (!nh) return false;
+  // Ktorý tab (History / Notes / Property changes) má user otvorený — server renderuje podľa
+  // svojej preferencie, takže bez obnovenia by ho výmena prehodila inam.
+  var prevTab = ch.querySelector('.tabs a.selected');
+  var prevTabId = prevTab ? prevTab.id : null;
+  ch.innerHTML = nh.innerHTML;
+  /* Klikáme VŽDY, aj keď server vyrenderoval ten istý tab: triedu `selected` síce prinesie HTML,
+     ale journaly filtruje až `showIssueHistory` a inline <script> z tabs partialu sa po nastavení
+     innerHTML nespustí. Klik je idempotentný a fokus nepresúva. */
+  try {
+    var link = prevTabId ? ch.querySelector('#' + prevTabId) : null;
+    if (link) link.click();
+  } catch (e) {}
+  return true;
+}
+
 /* ---------------------------------------------------------------------------
    Auto-save: JEDNA súvislá úprava = JEDNO uloženie.
 
@@ -185,6 +220,10 @@ function autosaver(getFields, ind) {
       if (res.success) {
         lastSaved = sent;
         ind.saved();
+        /* ZÁMERNE bez kontroly „pribudol záznam", akú má odosielanie komentára: `merge_hooks.rb`
+           zlučuje po sebe idúce živé úpravy do jedného záznamu, takže pri druhej a ďalšej úprave
+           ich počet zostáva rovnaký — a keď sa hodnota vráti na pôvodnú, dokonca klesne. */
+        try { swapHistory(res.text); } catch (e) {}
         if (dirty()) arm(BLUR_MS); // medzitým sa ešte niečo zmenilo → dorieš to jedným kolom
       } else {
         /* NEOPAKUJ HNEĎ: `lastSaved` sa neposunul, takže `dirty()` je stále true a okamžitý
@@ -420,11 +459,6 @@ export function liveComments(editor, textarea) {
     var val = (textarea.value || '').trim();
     if (!val) return;
     btn.disabled = true; ind.saving();
-    // Ktorý tab histórie (History / Notes / Property changes) má user otvorený. Server vyrenderuje
-    // odpoveď podľa `issue_history_default_tab` (preferencia usera), takže bez tohto by výmena
-    // histórie usera prehodila na iný tab.
-    var prevTab = document.querySelector('#history .tabs a.selected');
-    var prevTabId = prevTab ? prevTab.id : null;
     var countBefore = document.querySelectorAll('#history .journal').length;
     autosave({ notes: val }).then(function (res) {
       btn.disabled = false;
@@ -436,19 +470,7 @@ export function liveComments(editor, textarea) {
       // neprešlo (konflikt, cache, čokoľvek), radšej necháme rozpísaný text v editore.
       var landed = !doc || doc.querySelectorAll('#history .journal').length > countBefore;
       if (!landed) { ind.failed(); return; }
-      try {
-        var nh = doc && doc.getElementById('history');
-        var ch = document.getElementById('history');
-        if (nh && ch) {
-          ch.innerHTML = nh.innerHTML;
-          // Obnov pôvodný tab. Klikáme VŽDY, aj keď server vyrenderoval ten istý tab:
-          // triedu `selected` síce prinesie HTML, ale journaly filtruje až
-          // showIssueHistory a inline <script> z tabs partialu sa po nastavení
-          // innerHTML nespustí. Klik je idempotentný.
-          var link = prevTabId ? ch.querySelector('#' + prevTabId) : null;
-          if (link) link.click();
-        }
-      } catch (e) {}
+      try { swapHistory(res.text); } catch (e) {}
       // POZOR: `setContent` v tiptape 2 NEEMITUJE update (emitUpdate default false) → bez `true`
       // by v textarei zostal starý text a druhý klik na „Add comment" by poslal duplikát.
       editor.commands.setContent('', true);

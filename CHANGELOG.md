@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.15.3
+
+**A live edit of the description or the title now shows up in the history straight away, without
+reloading the page.** Reported as "the history entry only appears after a refresh".
+
+The save itself was always fine — the journal was written. What was missing is that nothing redrew
+the page. The response to our auto-save POST is the whole issue page, history included, but the
+description/title path read only the success flag and the new `lock_version` out of it. Posting a
+comment had been swapping the history out of that same response for a long time; saving the
+description never did.
+
+- The swap moved into a shared `swapHistory()` in `src/live.js` and is now called from the
+  auto-save success path as well. `liveComments` uses the same function instead of its own copy.
+- **No "a journal was added" guard on this path**, unlike the comment button. `merge_hooks.rb`
+  folds consecutive live edits into a single entry, so from the second edit on the journal count
+  does not grow — and when a value is changed back to its original, the count drops. That guard
+  would have blocked the refresh in exactly the cases this fixes.
+- The open history tab is restored after the swap, the same way it is for comments.
+- Focus and an unsent comment survive: `#history` is its own subtree, the description editor sits
+  up by `.description`, and the comment bar is a **sibling** of `#history`, not a child. An
+  auto-save landing mid-typing therefore throws nothing away.
+- Thumbnails and comment checkboxes keep working — the MutationObserver in `editor.js` sees the
+  redraw and re-runs `scan()`.
+
 ## 0.15.2
 
 **The merge window for live description/subject edits is now 30 minutes instead of 10.**
