@@ -20,7 +20,7 @@ import { EmoticonRules } from './emoticons.js';
 import { attachBubble } from './bubble.js';
 import { openLinkDialog } from './linkdialog.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
-import { liveDescription, liveTitle, liveComments, keepLastTabCookie, draftNewIssue } from './live.js';
+import { liveDescription, liveTitle, liveComments, keepLastTabCookie, draftNewIssue, adoptDescription } from './live.js';
 import { dedupeThumbnails } from './dedupe.js';
 import { enableJournalTasks } from './tasks.js';
 
@@ -94,6 +94,13 @@ function extensions() {
 function nativeBlock(ta) { return ta.closest('.jstBlock'); }
 
 function mountOver(textarea) {
+  /* Zmena stavu/trackera prekreslí `#all_attributes` zo servera a s ním príde NOVÁ textarea
+   * popisu. Popis už edituje živý editor hore — druhý editor by sa pripojil do formulára,
+   * stránka by narástla a poskočila. Novú textareu len napojíme na existujúci editor. */
+  if (!textarea.dataset.reMounted && adoptDescription(textarea)) {
+    textarea.dataset.reMounted = 'adopted';
+    return;
+  }
   // už namountované → len zabezpeč, že natívny widget ostáva skrytý
   if (textarea.dataset.reMounted) {
     var b0 = nativeBlock(textarea);

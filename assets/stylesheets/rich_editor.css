@@ -222,6 +222,10 @@
 /* existujúce prílohy v editácii — rovno viditeľné, pod sebou (v0.17.3) */
 #add_attachments #existing-attachments { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .re-att-more { font-size: 0.85rem; }
+/* riadok „Popis ✎ Upraviť" v editácii — popis sa edituje živo hore; skrytý aj počas
+   prekreslenia #all_attributes po zmene stavu (inak stránka na chvíľu narástla a poskočila) */
+body.re-live-desc #all_attributes p:has(#issue_description_and_toolbar),
+body.re-live-desc #all_attributes p:has(> textarea#issue_description) { display: none; }
 
 /* F3 auto-save indikátor */
 .re-save-ind { font-size: 0.72rem; margin-top: 4px; min-height: 1em; color: var(--previo-grey400, #b2b2b2); }

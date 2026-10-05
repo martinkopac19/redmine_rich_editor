@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.17.6
+
+**Changing the status in the edit form no longer makes the page jump.** Reported with a screen
+recording: after picking a new status the page scrolled by itself.
+
+- Redmine re-renders `#all_attributes` after a status/tracker change, which brings a **new**
+  description textarea. The editor mounted a second description editor on it and for ~250 ms the
+  "Description ✎ Edit" row was visible — the page grew and the content shifted (measured 153 px
+  on an issue with a description; issues without a description were not affected).
+- The new textarea is now adopted by the live description editor (kept in sync, so the native
+  Submit still sends the current description) instead of getting its own editor.
+- The "Description ✎ Edit" row is hidden by CSS (`body.re-live-desc … p:has(…)`) from the first
+  frame, also during the re-render.
+- New test `extra/status_change_scroll_cdp_test.mjs` — fails on 0.17.5 (153 px, extra editor),
+  passes on 0.17.6 (0 px).
+
 ## 0.17.5
 
 - **Uploading more than two files at once works.** Redmine queues uploads beyond its concurrency

@@ -364,10 +364,31 @@ export function liveTitle() {
 }
 
 // LIVE POPIS: editor (rich) presuň na miesto renderovaného popisu, schovaj rendered, auto-save.
+/* Textarea popisu, ktorú edituje živý editor hore (null, kým nie je). */
+var liveDescTa = null;
+
+// Nová textarea popisu po prekreslení formulára: napoj na živý editor, nevytváraj druhý.
+export function adoptDescription(textarea) {
+  if (!liveDescTa || textarea === liveDescTa || textarea.id !== 'issue_description') return false;
+  if (!textarea.closest('#issue-form')) return false;
+  textarea.value = liveDescTa.value;      // natívny Submit pošle aktuálny popis
+  var p = textarea.closest('p');
+  if (p) p.style.display = 'none';
+  return true;
+}
+
 export function liveDescription(editor, textarea) {
   var wiki = document.getElementById('issue_description_wiki');
   var wrapper = editor.options && editor.options.element;
   if (!wiki || !wrapper) return;
+  liveDescTa = textarea;
+  // CSS skryje riadok „Popis ✎ Upraviť" vo formulári hneď — aj počas prekreslenia, nie až po scane
+  document.body.classList.add('re-live-desc');
+  // písanie hore drž v súlade aj s textareou, ktorá do formulára prišla prekreslením
+  editor.on('update', function () {
+    var cur = document.getElementById('issue_description');
+    if (cur && cur !== textarea && cur.dataset.reMounted === 'adopted') cur.value = textarea.value;
+  });
   try {
     wiki.parentNode.insertBefore(wrapper, wiki);
     wiki.style.display = 'none';
