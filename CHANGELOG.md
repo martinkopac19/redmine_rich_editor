@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.17.8
+
+**Plain URLs in old texts are clickable again.** Descriptions migrated from the old Redmine
+contain bare `http://…` URLs (no `<>`). Redmine links them when rendering, but the editor parsed
+Markdown without linkify, so in the live description they were plain text; typing a space after
+the URL was the only workaround.
+
+- Linkify is on, limited to `http://` and `https://` (no fuzzy `booking.com`, no e-mail,
+  `mailto:`, `ftp:` or `//`), matching what Redmine itself links.
+- No data is changed. When the text is edited later, a bare URL is saved as `<url>`, which
+  Redmine renders the same way.
+- Test: `extra/bare_url_linkify_cdp_test.mjs` (saves nothing).
+
 ## 0.17.7
 
 - The **bottom action bar** (Redmine draws *Edit / Watch / Copy / …* a second time under the
