@@ -7,6 +7,7 @@ cs:
   re_add_comment: "Přidat komentář"
   re_add_comment_save: "Přidat komentář + uložit změny"
   re_choose_files: "Vybrat soubory"
+  re_show_more: "Zobrazit další (%{count})"
   re_submit: "Odeslat"
   re_text_size: "Velikost textu"
   re_normal_text: "Normální text"

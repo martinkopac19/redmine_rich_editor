@@ -7,6 +7,7 @@ sk:
   re_add_comment: "Pridať komentár"
   re_add_comment_save: "Pridať komentár + uložiť zmeny"
   re_choose_files: "Vybrať súbory"
+  re_show_more: "Zobraziť ďalšie (%{count})"
   re_submit: "Odoslať"
   re_text_size: "Veľkosť textu"
   re_normal_text: "Normálny text"

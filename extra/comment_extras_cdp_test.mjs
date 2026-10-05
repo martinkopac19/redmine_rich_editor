@@ -111,6 +111,35 @@ check('príloha je v novom verejnom zázname', await ev(`${NEW}.some(function(j)
 check('po uložení: private notes odškrtnuté', await ev(`document.getElementById('issue_private_notes').checked`), false);
 check('po uložení: zoznam súborov prázdny', await ev(`${BOX}.querySelectorAll('.attachments_fields > span').length`), 0);
 check('po uložení: upload stále k dispozícii', await ev(`!!${BOX}.querySelector('#new-attachments input[type=file]')`), true);
+const FS = `document.getElementById('add_attachments')`;
+const VISIBLE = `[].filter.call(${FS}.querySelectorAll('.existing-attachment'),function(e){return e.offsetParent!==null}).length`;
+await ev(`document.querySelector('.contextual a.icon-edit') && document.querySelector('.contextual a.icon-edit').click()`);
+await sleep(600);
+check('Edit: sekcia Súbory je vidno', await ev(`getComputedStyle(${FS}).display !== 'none'`), true);
+check('Edit: bez odkazu „Upraviť prílohy"', await ev(`!${FS}.querySelector('.contextual')`), true);
+check('Edit: bez čiary', await ev(`!${FS}.querySelector('hr')`), true);
+check('Edit: obe prílohy sú vidno hneď', await ev(VISIBLE), 2);
+
+console.log('\n[3] Viac ako 5 súborov → prvých 5 a „zobraziť ďalšie"');
+const MANY = (process.env.MANY_FILES || '').split('|').filter(Boolean);
+if (MANY.length) {
+  const d3 = await send('DOM.getDocument', { depth: -1, pierce: true });
+  const q3 = await send('DOM.querySelector', { nodeId: d3.root.nodeId, selector: '.re-comment-box #new-attachments input[type=file]' });
+  await send('DOM.setFileInputFiles', { nodeId: q3.nodeId, files: MANY });
+  // ZÁMERNE bez čakania na dokončenie uploadu — klik hneď, ako to robí človek
+  await waitFor(`${BOX}.querySelectorAll('.attachments_fields > span').length >= ${MANY.length}`, 'súbory v zozname');
+  await ev(`window.__pred = 1; ${BTN}.click()`);
+  await waitFor(`!window.__pred && document.readyState === 'complete' && !!document.getElementById('add_attachments')`, 'obnovenie po súboroch');
+  await sleep(1200);
+  await ev(`document.querySelector('.contextual a.icon-edit').click()`);
+  await sleep(600);
+  const total = 2 + MANY.length;
+  check('súbor bez textu sa uložil (spolu ' + total + ')', await ev(`${FS}.querySelectorAll('.existing-attachment').length`), total);
+  check('vidno prvých 5', await ev(VISIBLE), 5);
+  check('odkaz „zobraziť ďalšie" s počtom', await ev(`(${FS}.querySelector('.re-att-more')||{}).textContent`), process.env.EXPECT_MORE || ('Show ' + (total - 5) + ' more'));
+  await ev(`${FS}.querySelector('.re-att-more').click()`);
+  check('po kliku vidno všetky', await ev(VISIBLE), total);
+}
 
 console.log('\n' + '='.repeat(86));
 console.log(`  ${OK.length} OK, ${BAD.length} ZLE`);

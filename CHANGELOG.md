@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.17.5
+
+- **Uploading more than two files at once works.** Redmine queues uploads beyond its concurrency
+  limit (2) on `$(input).parents('form')` and dequeues them from there; at the comment bar there
+  was no parent form, so the 3rd and later files never started. The file row is now a `<form>`
+  that is never submitted (its fields still belong to `#issue-form` via the `form` attribute).
+- **"Add comment" waits for running uploads.** Redmine adds the `[token]` field as soon as a file
+  is picked but fills it only when the upload finishes; clicking earlier sent empty tokens and the
+  files were silently lost. The button now shows *Saving…* and saves once all uploads are done.
+- **Existing attachments in the edit form are shown right away** — no *Edit attachments* link,
+  no rule under the list, at most 5 visible with *Show N more* (translated). Without attachments
+  the section is hidden.
+- After a comment **with files** the page reloads, so the new files appear at once in the issue's
+  *Files* section and in the edit form.
+- Test `comment_extras_cdp_test.mjs` also uploads 5 files at once without text and clicks
+  immediately — 30 checks.
+
 ## 0.17.2
 
 - **Choosing files a second time works again.** Redmine (`addInputFiles`) removes the file input

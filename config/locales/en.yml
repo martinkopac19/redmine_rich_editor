@@ -7,6 +7,7 @@ en:
   re_add_comment: "Add comment"
   re_add_comment_save: "Add comment + save changes"
   re_choose_files: "Choose files"
+  re_show_more: "Show %{count} more"
   re_submit: "Submit"
   re_text_size: "Text size"
   re_normal_text: "Normal text"

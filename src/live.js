@@ -450,6 +450,34 @@ function describeAttr(form, name) {
   return label ? label + ': ' + (value || '—') : null;
 }
 
+/* EXISTUJÚCE PRÍLOHY V EDITÁCII. Redmine ich skrýva za odkaz „Upraviť prílohy", ktorý ich len
+ * rozbalí, a končí ich čiarou — po presune uploadu ku komentáru z toho ostal nezmyselný blok.
+ * Zoznam (so zaškrtávaním „Odstrániť") je teraz vidno hneď, bez odkazu a čiary; pri viac ako
+ * MAX_ATT súboroch sa zvyšok ukáže na klik. Bez príloh sa celá sekcia skryje. */
+var MAX_ATT = 5;
+function tidyExistingAttachments(fs, i18n) {
+  var ctx = fs.querySelector(':scope > .contextual');
+  if (ctx) ctx.parentNode.removeChild(ctx);
+  var ex = fs.querySelector('#existing-attachments');
+  var items = ex ? ex.querySelectorAll('.existing-attachment') : [];
+  if (!items.length) { fs.style.display = 'none'; return; }
+  ex.style.display = '';
+  Array.prototype.forEach.call(ex.querySelectorAll(':scope > hr'), function (hr) { hr.parentNode.removeChild(hr); });
+  if (items.length <= MAX_ATT) return;
+  var hidden = Array.prototype.slice.call(items, MAX_ATT);
+  hidden.forEach(function (it) { it.style.display = 'none'; });
+  var more = document.createElement('a');
+  more.href = '#';
+  more.className = 're-att-more';
+  more.textContent = (i18n.showMore || 'Show %{count} more').replace('%{count}', hidden.length);
+  more.addEventListener('click', function (e) {
+    e.preventDefault();
+    hidden.forEach(function (it) { it.style.display = ''; });
+    more.parentNode.removeChild(more);
+  });
+  ex.appendChild(more);
+}
+
 // LIVE KOMENTÁRE: notes editor presuň pod históriu ako vždy viditeľnú lištu + Submit tlačidlo.
 export function liveComments(editor, textarea) {
   var wrapper = editor.options && editor.options.element;
@@ -496,13 +524,19 @@ export function liveComments(editor, textarea) {
   var notesFs = document.getElementById('add_notes');
   if (notesFs && form && notesFs.contains(textarea)) notesFs.style.display = 'none';
 
-  var filesRow = document.createElement('div');
+  /* Obal je <form>, nie <div>: Redmine (attachments.js) radí uploady nad limit súbežných
+   * (2) do frontu na `$(input).parents('form')` a odtiaľ ich aj púšťa. Bez rodičovského
+   * formulára sa 3. a ďalší súbor nikdy nezačal nahrávať. Tento formulár sa nikdy neodosiela;
+   * polia v ňom patria cez atribút `form` stále do #issue-form. */
+  var filesRow = document.createElement('form');
   filesRow.className = 're-comment-files';
+  filesRow.setAttribute('novalidate', '');
+  filesRow.addEventListener('submit', function (e) { e.preventDefault(); });
   var newAtt = form ? document.getElementById('new-attachments') : null;
   if (newAtt) {
     var attFs = newAtt.closest('fieldset');
     filesRow.appendChild(newAtt);
-    if (attFs && !attFs.querySelector('input, a, img')) attFs.style.display = 'none';
+    if (attFs) tidyExistingAttachments(attFs, i18n);
     // zoznam nahratých súborov POD tlačidlo (Redmine ho hľadá cez .attachments_form, poradie je jedno)
     var attForm = newAtt.querySelector('.attachments_form');
     var attList = newAtt.querySelector('.attachments_fields');
@@ -551,9 +585,13 @@ export function liveComments(editor, textarea) {
     bindToForm();
     try { new MutationObserver(bindToForm).observe(row, { childList: true, subtree: true }); } catch (e) {}
   });
-  function pendingFiles() {
-    return filesRow.querySelectorAll('.attachments_fields input[name$="[token]"]').length;
+  /* Redmine vloží pole `[token]` hneď po výbere súboru, ale hodnotu doplní až po dokončení
+   * nahrávania. Odoslanie s prázdnym tokenom by súbor ticho zahodilo. */
+  function tokenInputs() {
+    return Array.prototype.slice.call(filesRow.querySelectorAll('.attachments_fields input[name$="[token]"]'));
   }
+  function pendingFiles() { return tokenInputs().filter(function (i) { return !!i.value; }).length; }
+  function filesUploading() { return tokenInputs().some(function (i) { return !i.value; }); }
   function resetExtras() {
     if (privCb) privCb.checked = false;
     Array.prototype.forEach.call(filesRow.querySelectorAll('.attachments_fields > span'), function (s) {
@@ -622,6 +660,18 @@ export function liveComments(editor, textarea) {
   }
 
   btn.addEventListener('click', function () {
+    // Súbory sa ešte nahrávajú → počkaj na ne (ako natívny formulár Redmine), potom ulož.
+    if (filesUploading()) {
+      if (btn.dataset.reWaiting) return;
+      btn.dataset.reWaiting = '1'; btn.disabled = true; ind.saving();
+      var t0 = Date.now();
+      var iv = setInterval(function () {
+        if (filesUploading() && Date.now() - t0 < 120000) return;
+        clearInterval(iv); delete btn.dataset.reWaiting; btn.disabled = false;
+        if (filesUploading()) ind.failed(); else btn.click();
+      }, 300);
+      return;
+    }
     var val = (textarea.value || '').trim();
     // samotný súbor bez textu je v Redmine platná úprava — aj natívny formulár to dovolí
     if (!val && !pendingFiles()) return;
@@ -630,6 +680,7 @@ export function liveComments(editor, textarea) {
     var attrs = pending();
     var extra = [];
     attrs.forEach(function (a) { a.values.forEach(function (v) { extra.push([a.name, v]); }); });
+    var withFiles = pendingFiles() > 0;
     var fields = { notes: val };
     if (privCb) fields.private_notes = privCb.checked ? '1' : '0';
     autosave(fields, { extra: extra, comment: true }).then(function (res) {
@@ -652,8 +703,9 @@ export function liveComments(editor, textarea) {
       // neprešlo (konflikt, cache, čokoľvek), radšej necháme rozpísaný text v editore.
       var landed = !doc || doc.querySelectorAll('#history .journal').length > countBefore;
       if (!landed) { ind.failed(); return; }
-      if (attrs.length) {
-        /* Zmenil sa stav/assignee/… → hlavička úlohy hore, formulár aj lock_version sú staré.
+      if (attrs.length || withFiles) {
+        /* Zmenil sa stav/assignee/… alebo pribudli súbory → hlavička úlohy, sekcia súborov hore
+         * aj v editácii, formulár a lock_version sú staré.
          * Výmena histórie by nestačila, preto celé načítanie. Komentár je už uložený,
          * koncept zmažeme, aby sa po načítaní neobnovil. */
         if (dkey) clearDraft(dkey);
