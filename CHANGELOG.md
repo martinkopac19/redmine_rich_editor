@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.2
+
+- **Choosing files a second time works again.** Redmine (`addInputFiles`) removes the file input
+  after every pick and inserts a fresh clone; our *Choose files* button kept clicking the removed
+  one, so only the first pick ever worked. It now looks up the current input on every click.
+- The empty *Notes* box in the edit form is hidden — the editor and *Private notes* live at the
+  comment bar now. The hidden textarea stays inside (the native Submit still sends it).
+- Test `comment_extras_cdp_test.mjs` uploads two files one after another — 22 checks.
+
 ## 0.17.1
 
 **Comment bar laid out as: editor → Private notes → Add comment → Choose files → uploaded files.**

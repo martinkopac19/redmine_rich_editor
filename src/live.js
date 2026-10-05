@@ -491,6 +491,10 @@ export function liveComments(editor, textarea) {
     if (privLbl) privRow.appendChild(privLbl);
     box.insertBefore(privRow, btn);
   }
+  /* Sekcia „Poznámka" v editácii je po presune editora aj private notes prázdna — len rámik.
+   * Skrytá textarea v nej ostáva (dátové úložisko komentára, natívny Submit ju pošle). */
+  var notesFs = document.getElementById('add_notes');
+  if (notesFs && form && notesFs.contains(textarea)) notesFs.style.display = 'none';
 
   var filesRow = document.createElement('div');
   filesRow.className = 're-comment-files';
@@ -524,7 +528,12 @@ export function liveComments(editor, textarea) {
       var pickTxt = document.createElement('span');
       pickTxt.textContent = i18n.chooseFiles || 'Choose files';
       pick.appendChild(pickTxt);
-      pick.addEventListener('click', function () { fileIn.click(); });
+      /* Redmine po každom výbere súborov input ZMAŽE a vloží jeho čistý klon (addInputFiles) —
+       * odkaz na pôvodný `fileIn` by po prvom súbore klikal do prázdna. Hľadá sa vždy aktuálny. */
+      pick.addEventListener('click', function () {
+        var cur = addAtt.querySelector('input[type="file"]');
+        if (cur) cur.click();
+      });
       fileIn.classList.add('re-file-native');
       fileIn.setAttribute('tabindex', '-1');
       addAtt.insertBefore(pick, fileIn);

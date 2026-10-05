@@ -4,7 +4,7 @@
  *
  * Login musí smieť dávať súkromné poznámky (napr. admin na lokále).
  */
-const [BASE, LOGIN, PASS, ISSUE, FILE, PORT = '9401'] = process.argv.slice(2);
+const [BASE, LOGIN, PASS, ISSUE, FILE, FILE2, PORT = '9401'] = process.argv.slice(2);
 if (!FILE) {
   console.error('pouzitie: node comment_extras_cdp_test.mjs <base> <login> <heslo> <issueId> <subor> [port]');
   process.exit(2);
@@ -72,6 +72,7 @@ check('private notes je NAD tlačidlom', await ev(after(`${BOX}.querySelector('.
 check('výber súborov je POD tlačidlom', await ev(after(BTN, `${BOX}.querySelector('.re-comment-files')`)), true);
 check('zoznam súborov je POD tlačidlom na výber', await ev(after(`${BOX}.querySelector('.add_attachment')`, `${BOX}.querySelector('.attachments_fields')`)), true);
 check('vlastné tlačidlo na súbory s textom', await ev(`(${BOX}.querySelector('.re-file-btn')||{}).textContent`), process.env.EXPECT_PICK || 'Choose files');
+check('prázdna sekcia Poznámka v editácii je skrytá', await ev(`getComputedStyle(document.getElementById('add_notes')).display`), 'none');
 check('natívny file input je skrytý', await ev(`${BOX}.querySelector('input[type=file]').getBoundingClientRect().width <= 1`), true);
 
 console.log('\n[2] Súbor + súkromný komentár → jeden súkromný záznam s prílohou');
@@ -79,6 +80,13 @@ const doc = await send('DOM.getDocument', { depth: -1, pierce: true });
 const q = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: '.re-comment-box #new-attachments input[type=file]' });
 await send('DOM.setFileInputFiles', { nodeId: q.nodeId, files: [FILE] });
 await waitFor(`!!${BOX}.querySelector('.attachments_fields input[name$="[token]"]')`, 'upload súboru');
+// Redmine po výbere input zmaže a vloží klon → druhý súbor musí ísť do NOVÉHO inputu
+const doc2 = await send('DOM.getDocument', { depth: -1, pierce: true });
+const q2 = await send('DOM.querySelector', { nodeId: doc2.root.nodeId, selector: '.re-comment-box #new-attachments input[type=file]' });
+await send('DOM.setFileInputFiles', { nodeId: q2.nodeId, files: [FILE2] });
+await waitFor(`${BOX}.querySelectorAll('.attachments_fields input[name$="[token]"]').length >= 2`, 'druhý upload').catch(() => {});
+check('nahrané 2 súbory', await ev(`${BOX}.querySelectorAll('.attachments_fields input[name$="[token]"]').length`), 2);
+check('tlačidlo klikne na AKTUÁLNY input (v stránke)', await ev(`(function(){var hit=null,orig=HTMLInputElement.prototype.click;HTMLInputElement.prototype.click=function(){hit=this;};try{${BOX}.querySelector('.re-file-btn').click();}finally{HTMLInputElement.prototype.click=orig;}return !!hit && hit.isConnected && hit.type==='file';})()`), true);
 check('skryté pole prílohy patrí formuláru', await ev(`${BOX}.querySelector('.attachments_fields input[name$="[token]"]').form.id`), 'issue-form');
 await ev(`document.getElementById('issue_private_notes').click()`);
 const n0 = await ev(COUNT);
@@ -97,6 +105,8 @@ const last = `[].slice.call(document.querySelectorAll('#history .journal')).pop(
 check('záznam má komentár', await ev(`${last}.textContent.indexOf(${J(note)}) >= 0`), true);
 check('záznam je súkromný', await ev(`${last}.classList.contains('private-notes') || !!${last}.querySelector('.private, .badge-private')`), true);
 const fname = FILE.split(/[\\/]/).pop();
+const fname2 = FILE2.split(/[\\/]/).pop();
+check('aj druhá príloha je uložená', await ev(`${NEW}.some(function(j){return j.textContent.indexOf(${J(fname2)}) >= 0})`), true);
 check('príloha je v novom verejnom zázname', await ev(`${NEW}.some(function(j){return !j.classList.contains('private-notes') && j.textContent.indexOf(${J(fname)}) >= 0})`), true);
 check('po uložení: private notes odškrtnuté', await ev(`document.getElementById('issue_private_notes').checked`), false);
 check('po uložení: zoznam súborov prázdny', await ev(`${BOX}.querySelectorAll('.attachments_fields > span').length`), 0);
