@@ -203,6 +203,12 @@
 #issue-form button[type="submit"]:hover { background: var(--previo-primary-dark, #910000); }
 .re-comment-submit:disabled { opacity: 0.6; cursor: default; }
 
+/* private notes a prílohy presunuté z editácie k lište komentára (v0.17.0) */
+.re-comment-extras { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-top: 8px; font-size: 0.85rem; }
+.re-comment-private { display: inline-flex; align-items: center; gap: 4px; }
+.re-comment-private label { margin: 0; cursor: pointer; }
+.re-comment-extras #new-attachments { display: inline-block; }
+
 /* F3 auto-save indikátor */
 .re-save-ind { font-size: 0.72rem; margin-top: 4px; min-height: 1em; color: var(--previo-grey400, #b2b2b2); }
 .re-save-ind.re-saving { color: var(--previo-grey400, #b2b2b2); }

@@ -63,8 +63,14 @@ export function autosave(fields, opts, _retry) {
   Object.keys(fields).forEach(function (k) { body.append('issue[' + k + ']', fields[k] == null ? '' : fields[k]); });
   // `opts.extra` = hotové páry [name, value] z formulára (zmenené polia ukladané s komentárom)
   (opts.extra || []).forEach(function (p) { body.append(p[0], p[1]); });
-  // čakajúce prílohy (drag&drop/paste) → priloží ich pri tomto uložení
-  var attInputs = Array.prototype.slice.call(form.querySelectorAll('input[name^="attachments["]'));
+  // čakajúce prílohy (drag&drop/paste) → priloží ich pri tomto uložení.
+  // `form.elements` vidí aj polia s atribútom `form="issue-form"` (prílohy presunuté k lište
+  // komentára). Tie patria komentáru — auto-save popisu/názvu ich nesmie „ukradnúť", preto
+  // idú len s `opts.comment`. File input (`attachments[dummy][file]`) nie je príloha.
+  var attInputs = Array.prototype.filter.call(form.elements, function (inp) {
+    return /^attachments\[/.test(inp.name || '') && inp.type !== 'file' &&
+      (opts.comment || !(inp.closest && inp.closest('.re-comment-box')));
+  });
   attInputs.forEach(function (inp) { body.append(inp.name, inp.value); });
   return fetch(action, {
     method: 'POST', credentials: 'same-origin',
@@ -467,11 +473,56 @@ export function liveComments(editor, textarea) {
   btn.title = (i18n.addComment || 'Add comment') + ' (' + modLabel + '+Enter)';
   box.appendChild(btn);
   var ind = makeIndicator(box);
+  var form = issueForm();
+
+  /* PRIVATE NOTES A PRÍLOHY patria ku komentáru, nie k editácii — presunú sa k lište.
+   * Atribút `form="issue-form"` ich nechá súčasťou formulára (natívny Submit ich pošle,
+   * `form.elements` aj FormData ich vidia), hoci v DOM sedia mimo neho. Redmine pridáva
+   * skryté polia nahraných súborov do `.attachments_fields` za behu → MutationObserver. */
+  var extras = document.createElement('div');
+  extras.className = 're-comment-extras';
+  var privCb = document.getElementById('issue_private_notes');
+  if (privCb && form) {
+    var priv = document.createElement('span');
+    priv.className = 're-comment-private';
+    var privHidden = privCb.previousElementSibling;
+    if (privHidden && privHidden.type === 'hidden' && privHidden.name === privCb.name) priv.appendChild(privHidden);
+    priv.appendChild(privCb);
+    var privLbl = document.querySelector('label[for="issue_private_notes"]');
+    if (privLbl) priv.appendChild(privLbl);
+    extras.appendChild(priv);
+  }
+  var newAtt = document.getElementById('new-attachments');
+  if (newAtt && form) {
+    var attFs = newAtt.closest('fieldset');
+    extras.appendChild(newAtt);
+    if (attFs && !attFs.querySelector('input, a, img')) attFs.style.display = 'none';
+  }
+  if (extras.children.length) {
+    box.insertBefore(extras, btn);
+    var bindToForm = function () {
+      Array.prototype.forEach.call(extras.querySelectorAll('input, select, textarea'), function (el) {
+        if (!el.getAttribute('form')) el.setAttribute('form', form.id);
+      });
+    };
+    bindToForm();
+    try { new MutationObserver(bindToForm).observe(extras, { childList: true, subtree: true }); } catch (e) {}
+  }
+  function pendingFiles() {
+    return extras.querySelectorAll('.attachments_fields input[name$="[token]"]').length;
+  }
+  function resetExtras() {
+    if (privCb) privCb.checked = false;
+    Array.prototype.forEach.call(extras.querySelectorAll('.attachments_fields > span'), function (s) {
+      if (s.parentNode) s.parentNode.removeChild(s);
+    });
+    var add = extras.querySelector('.add_attachment');
+    if (add) add.style.display = '';
+  }
 
   /* Kým sú vo formulári neuložené zmeny, tlačidlo povie, že ich uloží tiež — nech je vidno,
    * čo sa stane. Prekreslenie `#all_attributes` (zmena stavu/trackera) nezahlási `change`
    * na nových elementoch, preto aj MutationObserver. */
-  var form = issueForm();
   var baseAttrs = form ? attrValues(form) : {};
   function pending() { return form ? changedAttrs(form, baseAttrs) : []; }
   function refreshLabel() {
@@ -529,13 +580,16 @@ export function liveComments(editor, textarea) {
 
   btn.addEventListener('click', function () {
     var val = (textarea.value || '').trim();
-    if (!val) return;
+    // samotný súbor bez textu je v Redmine platná úprava — aj natívny formulár to dovolí
+    if (!val && !pendingFiles()) return;
     btn.disabled = true; ind.saving();
     var countBefore = document.querySelectorAll('#history .journal').length;
     var attrs = pending();
     var extra = [];
     attrs.forEach(function (a) { a.values.forEach(function (v) { extra.push([a.name, v]); }); });
-    autosave({ notes: val }, { extra: extra }).then(function (res) {
+    var fields = { notes: val };
+    if (privCb) fields.private_notes = privCb.checked ? '1' : '0';
+    autosave(fields, { extra: extra, comment: true }).then(function (res) {
       btn.disabled = false;
       if (!res.success) {
         // napr. povinné pole pri novom stave — ukáž dôvod zo servera, nie len „Save failed"
@@ -565,6 +619,7 @@ export function liveComments(editor, textarea) {
         return;
       }
       try { swapHistory(res.text); } catch (e) {}
+      resetExtras();
       // POZOR: `setContent` v tiptape 2 NEEMITUJE update (emitUpdate default false) → bez `true`
       // by v textarei zostal starý text a druhý klik na „Add comment" by poslal duplikát.
       editor.commands.setContent('', true);

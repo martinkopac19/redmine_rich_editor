@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.17.0
+
+**Private notes and file uploads moved from the edit form to the comment bar** — they belong to
+the comment, not to editing the issue.
+
+- The *Private notes* checkbox and the *Files* upload sit right above *Add comment*. They keep
+  `form="issue-form"`, so the native Submit of the edit form still sends them, and `FormData` /
+  `form.elements` see them although they live outside the form in the DOM. Hidden fields Redmine
+  adds after an upload get the attribute too (`MutationObserver`).
+- *Add comment* sends `private_notes` and the uploaded files. A file without any text is a valid
+  update, as in the native form.
+- Files uploaded at the comment bar go **only** with the comment — a live save of the description
+  or title no longer takes them.
+- The *Files* fieldset in the edit form is hidden when nothing is left in it; with existing
+  attachments it stays for editing/deleting them.
+- After a plain comment the checkbox is unticked and the list of uploaded files cleared.
+- Note: a private comment together with changes (status, a file…) gives **two** history entries —
+  that is Redmine core behaviour (the change must stay visible to everyone), same as the native form.
+- File input `attachments[dummy][file]` is no longer sent with live saves nor removed afterwards.
+- New test `extra/comment_extras_cdp_test.mjs` — 14 checks with a real browser.
+
 ## 0.16.0
 
 **"Add comment" now also saves the fields you changed in the edit form.** Reported as "when I
