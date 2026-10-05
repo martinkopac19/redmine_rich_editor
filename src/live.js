@@ -611,6 +611,29 @@ export function liveComments(editor, textarea) {
   function tokenInputs() {
     return Array.prototype.slice.call(filesRow.querySelectorAll('.attachments_fields input[name$="[token]"]'));
   }
+  /* SPODNÁ LIŠTA AKCIÍ (Upraviť, Sledovať, Kopírovať, …) — Redmine ju kreslí druhýkrát pod
+   * históriou. Presunie sa vpravo na úroveň „Vybrať súbory", a Sledovať/Kopírovať idú do „…".
+   * Horná lišta ostáva bez zmeny. Odkaz Sledovať Redmine po kliku vymieňa podľa triedy
+   * `issue-<id>-watcher`, takže funguje aj v menu. */
+  if (filesRow.parentNode) {
+    var bars = document.querySelectorAll('#content > .contextual');
+    var bottomBar = bars.length > 1 ? bars[bars.length - 1] : null;
+    if (bottomBar && (box.compareDocumentPosition(bottomBar) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+      var actionsRow = document.createElement('div');
+      actionsRow.className = 're-comment-actions';
+      box.insertBefore(actionsRow, filesRow);
+      actionsRow.appendChild(filesRow);
+      actionsRow.appendChild(bottomBar);
+      var menu = bottomBar.querySelector('.drdn-items');
+      if (menu) {
+        [':scope > a.icon-copy', ':scope > a[class*="-watcher"]'].forEach(function (sel) {
+          var link = bottomBar.querySelector(sel);
+          if (link) menu.insertBefore(link, menu.firstChild);
+        });
+      }
+    }
+  }
+
   function pendingFiles() { return tokenInputs().filter(function (i) { return !!i.value; }).length; }
   function filesUploading() { return tokenInputs().some(function (i) { return !i.value; }); }
   function resetExtras() {

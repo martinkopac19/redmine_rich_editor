@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.7
+
+- The **bottom action bar** (Redmine draws *Edit / Watch / Copy / …* a second time under the
+  history) moved to the right of *Choose files*, on the same row.
+- In that bottom bar *Watch* and *Copy* moved into the *…* menu; only *Edit* stays visible.
+  The top bar is unchanged. Redmine swaps the watch link by its `issue-<id>-watcher` class, so it
+  keeps working from the menu and both bars stay in sync (verified in a browser).
+
 ## 0.17.6
 
 **Changing the status in the edit form no longer makes the page jump.** Reported with a screen
