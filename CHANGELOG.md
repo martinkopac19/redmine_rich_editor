@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.17.9
+
+**Enter after a bold section label starts normal text.** Issue templates (Bug, Feature) use
+whole bold lines as section labels (`**Actual result:**`). Enter kept the bold mark, so the text
+under the label was bold and had to be switched back by hand.
+
+- Applies only to a top-level paragraph that is entirely bold, with the cursor at its end.
+- Everywhere else Enter behaves as before (a bold word inside normal text, lists, italics).
+- The extension sits before the suggestion extensions, so Enter in an open @ / # / : / menu
+  still picks the item.
+- Test: `extra/bold_label_enter_cdp_test.mjs` (saves nothing).
+
 ## 0.17.8
 
 **Plain URLs in old texts are clickable again.** Descriptions migrated from the old Redmine

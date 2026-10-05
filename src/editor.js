@@ -14,6 +14,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import { ReImage } from './image.js';
 import { preprocess } from './md-compat.js';
 import { ReHardBreak } from './hardbreak.js';
+import { BoldLabelEnter } from './boldlabel.js';
 import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { EmoticonRules } from './emoticons.js';
@@ -92,6 +93,7 @@ function extensions() {
   return [
     StarterKit.configure({ heading: { levels: [1, 2, 3, 4] }, hardBreak: false }),
     ReHardBreak,
+    BoldLabelEnter,
     /* `openOnClick` je zapnuté zámerne: na detaile issue tento editor NAHRÁDZA vyrenderovaný
        popis (F3), takže je to jediná plocha, kde človek odkaz vidí — keby ho klik neotvoril,
        odkazy v popise by boli mŕtve. Otvára sa do nového panela (`target=_blank` je default
