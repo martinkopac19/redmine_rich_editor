@@ -5,6 +5,7 @@ cs:
   re_link_prompt: "Odkaz (URL):"
   re_no_blocks: "Žádné bloky"
   re_add_comment: "Přidat komentář"
+  re_add_comment_save: "Přidat komentář + uložit změny"
   re_submit: "Odeslat"
   re_text_size: "Velikost textu"
   re_normal_text: "Normální text"

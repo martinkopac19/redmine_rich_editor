@@ -61,6 +61,8 @@ export function autosave(fields, opts, _retry) {
   body.append('no_flash', '1');
   if (lvEl) body.append('issue[lock_version]', lvEl.value);
   Object.keys(fields).forEach(function (k) { body.append('issue[' + k + ']', fields[k] == null ? '' : fields[k]); });
+  // `opts.extra` = hotové páry [name, value] z formulára (zmenené polia ukladané s komentárom)
+  (opts.extra || []).forEach(function (p) { body.append(p[0], p[1]); });
   // čakajúce prílohy (drag&drop/paste) → priloží ich pri tomto uložení
   var attInputs = Array.prototype.slice.call(form.querySelectorAll('input[name^="attachments["]'));
   attInputs.forEach(function (inp) { body.append(inp.name, inp.value); });
@@ -98,7 +100,7 @@ function makeIndicator(host) {
   return {
     saving: function () { ind.textContent = 'Saving…'; ind.className = 're-save-ind re-saving'; },
     saved: function () { ind.textContent = 'Saved'; ind.className = 're-save-ind re-saved'; setTimeout(function () { ind.textContent = ''; }, 1500); },
-    failed: function () { ind.textContent = 'Save failed — use Edit to save manually'; ind.className = 're-save-ind re-error'; }
+    failed: function (msg) { ind.textContent = msg || 'Save failed — use Edit to save manually'; ind.className = 're-save-ind re-error'; }
   };
 }
 
@@ -395,6 +397,53 @@ export function keepLastTabCookie() {
   });
 }
 
+/* ZMENENÉ POLIA EDITÁCIE ULOŽENÉ SPOLU S KOMENTÁROM.
+ *
+ * „Add comment" posielal len text komentára — stav, assignee či priorita zmenené vo formulári
+ * pod ním sa ticho zahodili a ľudia museli ukladať na dvakrát. Teraz sa porovná formulár so
+ * stavom pri načítaní stránky a zmenené polia idú v tom istom POSTe → jeden záznam v histórii,
+ * jedna notifikácia (komentár so zmenou stavu).
+ *
+ * Názov, popis a komentár majú vlastné ukladanie, lock_version rieši autosave. Porovnáva sa
+ * podľa mena poľa, nie podľa elementu: zmena trackera/stavu prekreslí `#all_attributes` zo
+ * servera a elementy sa vymenia. Pole, ktoré pri načítaní neexistovalo, sa berie ako prázdne. */
+var NOT_ATTR = /^issue\[(notes|subject|description|lock_version|private_notes)\]/;
+
+function attrValues(form) {
+  var out = {};
+  new FormData(form).forEach(function (v, k) {
+    if (k.indexOf('issue[') !== 0 || NOT_ATTR.test(k) || typeof v !== 'string') return;
+    (out[k] = out[k] || []).push(v);
+  });
+  return out;
+}
+
+function changedAttrs(form, base) {
+  var now = attrValues(form);
+  return Object.keys(now).filter(function (k) {
+    return now[k].join('\u0001') !== (base[k] || []).join('\u0001');
+  }).map(function (k) { return { name: k, values: now[k] }; });
+}
+
+// „Stav: In Progress" pre tlačidlo — popisok z <label>, hodnota tak, ako ju človek vidí.
+function describeAttr(form, name) {
+  var el = form.querySelector('[name="' + name.replace(/"/g, '\\"') + '"]:not([type="hidden"])') ||
+           form.querySelector('[name="' + name.replace(/"/g, '\\"') + '"]');
+  if (!el) return null;
+  var lbl = el.id ? form.querySelector('label[for="' + el.id + '"]') : null;
+  var label = lbl ? lbl.textContent.replace(/\*/g, '').replace(/:\s*$/, '').trim() : '';
+  var value;
+  if (el.tagName === 'SELECT') {
+    value = Array.prototype.filter.call(el.options, function (o) { return o.selected; })
+      .map(function (o) { return o.textContent.trim(); }).join(', ');
+  } else if (el.type === 'checkbox') {
+    value = el.checked ? '✓' : '✗';
+  } else {
+    value = el.value;
+  }
+  return label ? label + ': ' + (value || '—') : null;
+}
+
 // LIVE KOMENTÁRE: notes editor presuň pod históriu ako vždy viditeľnú lištu + Submit tlačidlo.
 export function liveComments(editor, textarea) {
   var wrapper = editor.options && editor.options.element;
@@ -418,6 +467,29 @@ export function liveComments(editor, textarea) {
   btn.title = (i18n.addComment || 'Add comment') + ' (' + modLabel + '+Enter)';
   box.appendChild(btn);
   var ind = makeIndicator(box);
+
+  /* Kým sú vo formulári neuložené zmeny, tlačidlo povie, že ich uloží tiež — nech je vidno,
+   * čo sa stane. Prekreslenie `#all_attributes` (zmena stavu/trackera) nezahlási `change`
+   * na nových elementoch, preto aj MutationObserver. */
+  var form = issueForm();
+  var baseAttrs = form ? attrValues(form) : {};
+  function pending() { return form ? changedAttrs(form, baseAttrs) : []; }
+  function refreshLabel() {
+    var ch = pending();
+    if (!ch.length) { btn.textContent = i18n.addComment || 'Add comment'; return; }
+    var first = null;
+    for (var i = 0; i < ch.length && !first; i++) first = describeAttr(form, ch[i].name);
+    var more = ch.length > 1 ? ' +' + (ch.length - 1) : '';
+    btn.textContent = (i18n.addCommentSave || 'Add comment + save changes') +
+      (first ? ' (' + first + more + ')' : '');
+  }
+  if (form) {
+    var lt = null;
+    var later = function () { clearTimeout(lt); lt = setTimeout(refreshLabel, 50); };
+    form.addEventListener('change', later);
+    form.addEventListener('input', later);
+    try { new MutationObserver(later).observe(form, { childList: true, subtree: true }); } catch (e) {}
+  }
 
   /* Cmd/Ctrl+Enter odošle komentár. ZÁMERNE nie Cmd/Ctrl+K: to v editore
    * otvára dialóg odkazu (editor.js `Mod-k`) a mimo editora paletu — tretia
@@ -460,9 +532,22 @@ export function liveComments(editor, textarea) {
     if (!val) return;
     btn.disabled = true; ind.saving();
     var countBefore = document.querySelectorAll('#history .journal').length;
-    autosave({ notes: val }).then(function (res) {
+    var attrs = pending();
+    var extra = [];
+    attrs.forEach(function (a) { a.values.forEach(function (v) { extra.push([a.name, v]); }); });
+    autosave({ notes: val }, { extra: extra }).then(function (res) {
       btn.disabled = false;
-      if (!res.success) { ind.failed(); return; }
+      if (!res.success) {
+        // napr. povinné pole pri novom stave — ukáž dôvod zo servera, nie len „Save failed"
+        var why = '';
+        try {
+          var errDoc = new DOMParser().parseFromString(res.text, 'text/html');
+          why = Array.prototype.map.call(errDoc.querySelectorAll('#errorExplanation li'),
+            function (li) { return li.textContent.trim(); }).join(' · ');
+        } catch (e) {}
+        ind.failed(why || null);
+        return;
+      }
       // bez reloadu: z odpovede (show page) vymeň históriu a vyčisti editor
       var doc = null;
       try { doc = new DOMParser().parseFromString(res.text, 'text/html'); } catch (e) {}
@@ -470,6 +555,15 @@ export function liveComments(editor, textarea) {
       // neprešlo (konflikt, cache, čokoľvek), radšej necháme rozpísaný text v editore.
       var landed = !doc || doc.querySelectorAll('#history .journal').length > countBefore;
       if (!landed) { ind.failed(); return; }
+      if (attrs.length) {
+        /* Zmenil sa stav/assignee/… → hlavička úlohy hore, formulár aj lock_version sú staré.
+         * Výmena histórie by nestačila, preto celé načítanie. Komentár je už uložený,
+         * koncept zmažeme, aby sa po načítaní neobnovil. */
+        if (dkey) clearDraft(dkey);
+        editor.commands.setContent('', true);
+        window.location.reload();
+        return;
+      }
       try { swapHistory(res.text); } catch (e) {}
       // POZOR: `setContent` v tiptape 2 NEEMITUJE update (emitUpdate default false) → bez `true`
       // by v textarei zostal starý text a druhý klik na „Add comment" by poslal duplikát.

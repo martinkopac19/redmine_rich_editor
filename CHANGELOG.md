@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.16.0
+
+**"Add comment" now also saves the fields you changed in the edit form.** Reported as "when I
+change the status together with a comment, the status is not saved and I have to do it twice".
+The comment bar only sent the text of the comment; a status, assignee or priority picked in the
+edit form below it was silently dropped, so the typical "New → In Progress, *working on it*" or
+"→ Blocked, *because…*" took two saves.
+
+- The form is compared with its state when the page loaded; changed fields are sent in the same
+  request as the comment → **one history entry and one notification** (a comment with a status
+  change), exactly like the native form.
+- While there are unsaved changes the button says so: *Add comment + save changes
+  (Status: In Progress +1)*. Translated in English, Czech and Slovak.
+- Comparison is by field name, not by element: changing the status or tracker re-renders
+  `#all_attributes` from the server, so a `MutationObserver` keeps the label up to date.
+- Subject, description and the comment itself keep their own saving and are never sent twice.
+- When fields were saved, the page reloads — the issue header, the edit form and `lock_version`
+  would otherwise be stale. A plain comment still goes through without a reload, as before.
+- A rejected save (e.g. a field required by the new status) shows the server's reason instead of
+  just "Save failed".
+- New test `extra/comment_with_attrs_cdp_test.mjs` — 13 checks with a real browser.
+
 ## 0.15.3
 
 **A live edit of the description or the title now shows up in the history straight away, without

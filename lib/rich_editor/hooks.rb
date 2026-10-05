@@ -22,6 +22,7 @@ module RichEditor
           link: ::I18n.t(:re_link_prompt),
           noBlocks: ::I18n.t(:re_no_blocks),
           addComment: ::I18n.t(:re_add_comment),
+          addCommentSave: ::I18n.t(:re_add_comment_save),
           submit: ::I18n.t(:re_submit),
           textSize: ::I18n.t(:re_text_size),
           normalText: ::I18n.t(:re_normal_text),
