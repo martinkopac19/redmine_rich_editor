@@ -65,6 +65,29 @@ var LinkShortcut = Extension.create({
   }
 });
 
+/* Holé URL v starom texte (`http://…` bez `<>` či `[…](…)`) Redmine pri zobrazení prelinkuje
+   sám, markdown-it bez linkify ich nechá ako text → v živom popise neboli klikateľné.
+   Linkify zapíname len pre `http://` a `https://` (bez fuzzy `booking.com`, mailto, ftp, `//`),
+   aby editor nerobil odkazy tam, kde ich Redmine nerobí. Dáta sa nemenia; pri ďalšej úprave
+   textu sa holá URL uloží ako `<url>` (Redmine ju vyrenderuje rovnako). */
+var ReLink = Link.extend({
+  addStorage: function () {
+    var parent = (this.parent && this.parent()) || {};
+    return Object.assign({}, parent, {
+      markdown: {
+        parse: {
+          setup: function (md) {
+            md.set({ linkify: true });
+            md.linkify
+              .set({ fuzzyLink: false, fuzzyEmail: false, fuzzyIP: false })
+              .add('ftp:', null).add('//', null).add('mailto:', null);
+          }
+        }
+      }
+    });
+  }
+});
+
 function extensions() {
   return [
     StarterKit.configure({ heading: { levels: [1, 2, 3, 4] }, hardBreak: false }),
@@ -74,7 +97,7 @@ function extensions() {
        odkazy v popise by boli mŕtve. Otvára sa do nového panela (`target=_blank` je default
        rozšírenia), takže sa nepríde o rozpísaný text. Kurzor sa tým do odkazu myšou nedostane
        → upraviť ho ide cez lištu, ktorá vyskočí pri prejdení myšou (viď bubble.js). */
-    Link.configure({ openOnClick: true, autolink: true }),
+    ReLink.configure({ openOnClick: true, autolink: true }),
     TaskList,
     TaskItem.configure({ nested: true }),
     Table.configure({ resizable: false }),
