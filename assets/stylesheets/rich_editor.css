@@ -203,11 +203,22 @@
 #issue-form button[type="submit"]:hover { background: var(--previo-primary-dark, #910000); }
 .re-comment-submit:disabled { opacity: 0.6; cursor: default; }
 
-/* private notes a prílohy presunuté z editácie k lište komentára (v0.17.0) */
-.re-comment-extras { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-top: 8px; font-size: 0.85rem; }
-.re-comment-private { display: inline-flex; align-items: center; gap: 4px; }
+/* private notes a prílohy presunuté z editácie k lište komentára (v0.17.x):
+   editor → [ ] Súkromné poznámky → Pridať komentár → Vybrať súbory → zoznam súborov */
+.re-comment-private { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.85rem; }
 .re-comment-private label { margin: 0; cursor: pointer; }
-.re-comment-extras #new-attachments { display: inline-block; }
+.re-comment-files { margin-top: 10px; font-size: 0.85rem; }
+.re-comment-files #new-attachments { display: block !important; }
+.re-comment-files .attachments_form { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.re-comment-files .attachments_fields:empty { display: none; }
+.re-comment-files .add_attachment { display: inline-flex; align-items: center; gap: 8px; color: var(--previo-grey500, #6b7280); }
+/* natívny file input ostáva v DOM (Redmine na ňom visí), len ho nevidno */
+.re-comment-files input.re-file-native { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+.re-file-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px;
+  background: var(--previo-white, #fff); color: var(--previo-grey700, #1f1f1f); border: 1px solid var(--previo-grey300, #d1d5db);
+  border-radius: var(--previo-radius, 8px); font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+.re-file-btn:hover { border-color: var(--previo-grey400, #9ca3af); }
+.re-file-btn svg { flex: none; }
 
 /* F3 auto-save indikátor */
 .re-save-ind { font-size: 0.72rem; margin-top: 4px; min-height: 1em; color: var(--previo-grey400, #b2b2b2); }

@@ -23,6 +23,7 @@ module RichEditor
           noBlocks: ::I18n.t(:re_no_blocks),
           addComment: ::I18n.t(:re_add_comment),
           addCommentSave: ::I18n.t(:re_add_comment_save),
+          chooseFiles: ::I18n.t(:re_choose_files),
           submit: ::I18n.t(:re_submit),
           textSize: ::I18n.t(:re_text_size),
           normalText: ::I18n.t(:re_normal_text),

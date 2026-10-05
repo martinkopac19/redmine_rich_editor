@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.17.1
+
+**Comment bar laid out as: editor → Private notes → Add comment → Choose files → uploaded files.**
+
+- *Private notes* sits right under the editor, the file picker under the *Add comment* button
+  (the button widens with "+ save changes", so next to it would not fit), and the list of uploaded
+  files below the picker instead of above it.
+- The browser's own "Choose Files" button is drawn in the **browser's** language and cannot be
+  translated. It is hidden (Redmine still listens on it) and replaced by our button that clicks
+  it — *Choose files / Vybrat soubory / Vybrať súbory*, styled as a secondary button.
+
 ## 0.17.0
 
 **Private notes and file uploads moved from the edit form to the comment bar** — they belong to

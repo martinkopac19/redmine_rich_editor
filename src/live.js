@@ -475,48 +475,82 @@ export function liveComments(editor, textarea) {
   var ind = makeIndicator(box);
   var form = issueForm();
 
-  /* PRIVATE NOTES A PRÍLOHY patria ku komentáru, nie k editácii — presunú sa k lište.
+  /* PRIVATE NOTES A PRÍLOHY patria ku komentáru, nie k editácii — presunú sa k lište:
+   *   editor → [ ] Súkromné poznámky → Pridať komentár → Vybrať súbory → zoznam súborov
    * Atribút `form="issue-form"` ich nechá súčasťou formulára (natívny Submit ich pošle,
    * `form.elements` aj FormData ich vidia), hoci v DOM sedia mimo neho. Redmine pridáva
    * skryté polia nahraných súborov do `.attachments_fields` za behu → MutationObserver. */
-  var extras = document.createElement('div');
-  extras.className = 're-comment-extras';
-  var privCb = document.getElementById('issue_private_notes');
-  if (privCb && form) {
-    var priv = document.createElement('span');
-    priv.className = 're-comment-private';
+  var privRow = document.createElement('div');
+  privRow.className = 're-comment-private';
+  var privCb = form ? document.getElementById('issue_private_notes') : null;
+  if (privCb) {
     var privHidden = privCb.previousElementSibling;
-    if (privHidden && privHidden.type === 'hidden' && privHidden.name === privCb.name) priv.appendChild(privHidden);
-    priv.appendChild(privCb);
+    if (privHidden && privHidden.type === 'hidden' && privHidden.name === privCb.name) privRow.appendChild(privHidden);
+    privRow.appendChild(privCb);
     var privLbl = document.querySelector('label[for="issue_private_notes"]');
-    if (privLbl) priv.appendChild(privLbl);
-    extras.appendChild(priv);
+    if (privLbl) privRow.appendChild(privLbl);
+    box.insertBefore(privRow, btn);
   }
-  var newAtt = document.getElementById('new-attachments');
-  if (newAtt && form) {
+
+  var filesRow = document.createElement('div');
+  filesRow.className = 're-comment-files';
+  var newAtt = form ? document.getElementById('new-attachments') : null;
+  if (newAtt) {
     var attFs = newAtt.closest('fieldset');
-    extras.appendChild(newAtt);
+    filesRow.appendChild(newAtt);
     if (attFs && !attFs.querySelector('input, a, img')) attFs.style.display = 'none';
+    // zoznam nahratých súborov POD tlačidlo (Redmine ho hľadá cez .attachments_form, poradie je jedno)
+    var attForm = newAtt.querySelector('.attachments_form');
+    var attList = newAtt.querySelector('.attachments_fields');
+    var addAtt = newAtt.querySelector('.add_attachment');
+    if (attForm && attList && addAtt) attForm.appendChild(attList);
+    /* Text natívneho „Choose Files" kreslí prehliadač v SVOJOM jazyku — preložiť sa nedá.
+     * Natívny input ostáva (Redmine na ňom visí cez onchange) a vlastné tlačidlo naň len klikne. */
+    var fileIn = addAtt && addAtt.querySelector('input[type="file"]');
+    if (fileIn) {
+      var pick = document.createElement('button');
+      pick.type = 'button';
+      pick.className = 're-file-btn';
+      var NS = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', '16'); svg.setAttribute('height', '16');
+      svg.setAttribute('aria-hidden', 'true');
+      var path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', 'M12 16V4m0 0l-5 5m5-5l5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3');
+      path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'currentColor');
+      path.setAttribute('stroke-width', '2'); path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(path);
+      pick.appendChild(svg);
+      var pickTxt = document.createElement('span');
+      pickTxt.textContent = i18n.chooseFiles || 'Choose files';
+      pick.appendChild(pickTxt);
+      pick.addEventListener('click', function () { fileIn.click(); });
+      fileIn.classList.add('re-file-native');
+      fileIn.setAttribute('tabindex', '-1');
+      addAtt.insertBefore(pick, fileIn);
+    }
+    box.appendChild(filesRow);
   }
-  if (extras.children.length) {
-    box.insertBefore(extras, btn);
+
+  [privRow, filesRow].forEach(function (row) {
+    if (!row.parentNode) return;
     var bindToForm = function () {
-      Array.prototype.forEach.call(extras.querySelectorAll('input, select, textarea'), function (el) {
+      Array.prototype.forEach.call(row.querySelectorAll('input, select, textarea'), function (el) {
         if (!el.getAttribute('form')) el.setAttribute('form', form.id);
       });
     };
     bindToForm();
-    try { new MutationObserver(bindToForm).observe(extras, { childList: true, subtree: true }); } catch (e) {}
-  }
+    try { new MutationObserver(bindToForm).observe(row, { childList: true, subtree: true }); } catch (e) {}
+  });
   function pendingFiles() {
-    return extras.querySelectorAll('.attachments_fields input[name$="[token]"]').length;
+    return filesRow.querySelectorAll('.attachments_fields input[name$="[token]"]').length;
   }
   function resetExtras() {
     if (privCb) privCb.checked = false;
-    Array.prototype.forEach.call(extras.querySelectorAll('.attachments_fields > span'), function (s) {
+    Array.prototype.forEach.call(filesRow.querySelectorAll('.attachments_fields > span'), function (s) {
       if (s.parentNode) s.parentNode.removeChild(s);
     });
-    var add = extras.querySelector('.add_attachment');
+    var add = filesRow.querySelector('.add_attachment');
     if (add) add.style.display = '';
   }
 

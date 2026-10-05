@@ -67,7 +67,12 @@ check('private notes stále patrí formuláru', await ev(`document.getElementByI
 check('upload je pri komentári', await ev(`!!${BOX}.querySelector('#new-attachments input[type=file]')`), true);
 // fieldset ostáva, len ak v ňom zostalo niečo užitočné (úprava/mazanie existujúcich príloh)
 check('fieldset Files v editácii: skrytý, alebo má vlastný obsah', await ev(`(function(){var f=document.getElementById('add_attachments');return getComputedStyle(f).display==='none' || !!f.querySelector('input, a, img')})()`), true);
-check('tlačidlo je za prílohami', await ev(`!!(${BOX}.querySelector('.re-comment-extras').compareDocumentPosition(${BTN}) & 4)`), true);
+const after = (x, y) => `!!(${x}.compareDocumentPosition(${y}) & 4)`;
+check('private notes je NAD tlačidlom', await ev(after(`${BOX}.querySelector('.re-comment-private')`, BTN)), true);
+check('výber súborov je POD tlačidlom', await ev(after(BTN, `${BOX}.querySelector('.re-comment-files')`)), true);
+check('zoznam súborov je POD tlačidlom na výber', await ev(after(`${BOX}.querySelector('.add_attachment')`, `${BOX}.querySelector('.attachments_fields')`)), true);
+check('vlastné tlačidlo na súbory s textom', await ev(`(${BOX}.querySelector('.re-file-btn')||{}).textContent`), process.env.EXPECT_PICK || 'Choose files');
+check('natívny file input je skrytý', await ev(`${BOX}.querySelector('input[type=file]').getBoundingClientRect().width <= 1`), true);
 
 console.log('\n[2] Súbor + súkromný komentár → jeden súkromný záznam s prílohou');
 const doc = await send('DOM.getDocument', { depth: -1, pierce: true });
