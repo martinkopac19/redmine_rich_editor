@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.18.0
+
+**Images in the issue description: open in a new window, resizing is silent.** The live description
+is also the reading surface, and many people may edit it. A click on an image only offered the
+size bar, so a reader who wanted to see the image switched its size instead — that changed the
+description text, wrote a history entry and notified every watcher.
+
+- The image bar has a new first button **Open** (reuses the link-bar label). It opens the attachment
+  page in a new tab, like a native Redmine thumbnail; a fresh upload without a page opens its blob.
+  Double-click or Ctrl/Cmd+click on the image opens it directly.
+- Changing only the size or mode of images (small preview ↔ full width, − / +) in the live
+  description is saved **without a history entry and without a notification**
+  (`RichEditor::ImageOnly` in `merge_hooks.rb`). The server decides: the old and new description
+  must be equal once every image (`![…](f)` / `{{thumbnail(f, size=N)}}`) is reduced to its file
+  name; line endings and `<https://…>` vs a bare URL are ignored. Any other change is recorded
+  as before. Only live saves (`re_live=1`); the full Edit form is unchanged.
+- For that to work on old descriptions the editor no longer re-serializes the whole document
+  when only images changed: it swaps just the markup of the changed images in the original text
+  (`patchImageMarkdown` in `image.js`). A full re-serialization reformats old texts (`1)` → `1.`,
+  blank lines, `->` → `-&gt;`); on 60 real open issues with images only 7 would have stayed silent,
+  now 60/60.
+- Tests: `extra/selftest_merge.rb` scenarios 8–13, `extra/image_size_silent_cdp_test.mjs`
+  (changes the size and puts it back; both silent).
+
+**Comment row: “Don’t send notifications” on the left, private notes on the right.** When
+redmine_notification_filter renders its `.nf-suppress` checkbox (only for users with the
+`suppress_mail_issue_switch` permission), the editor moves it to the row above *Add comment*,
+left side; private notes move to the right side of the same row. The checkbox is sent with the
+comment (`suppress_mail=1`) and cleared after a successful save.
+
 ## 0.17.9
 
 **Enter after a bold section label starts normal text.** Issue templates (Bug, Feature) use
