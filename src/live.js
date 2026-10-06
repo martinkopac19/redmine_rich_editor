@@ -525,21 +525,29 @@ export function liveComments(editor, textarea) {
   var form = issueForm();
 
   /* PRIVATE NOTES A PRÍLOHY patria ku komentáru, nie k editácii — presunú sa k lište:
-   *   editor → [ ] Súkromné poznámky → Pridať komentár → Vybrať súbory → zoznam súborov
+   *   editor → [ ] Neposílat notifikace … [ ] Súkromné poznámky → Pridať komentár → Vybrať súbory → zoznam súborov
    * Atribút `form="issue-form"` ich nechá súčasťou formulára (natívny Submit ich pošle,
    * `form.elements` aj FormData ich vidia), hoci v DOM sedia mimo neho. Redmine pridáva
    * skryté polia nahraných súborov do `.attachments_fields` za behu → MutationObserver. */
   var privRow = document.createElement('div');
   privRow.className = 're-comment-private';
+  /* Riadok nad tlačidlom: vľavo „Neposílat notifikace" (redmine_notification_filter, len kto
+   * má oprávnenie), vpravo súkromné poznámky. */
+  var supWrap = form ? document.querySelector('.nf-suppress') : null;
+  var supCb = supWrap ? supWrap.querySelector('input[type="checkbox"]') : null;
+  if (supWrap) privRow.appendChild(supWrap);
   var privCb = form ? document.getElementById('issue_private_notes') : null;
   if (privCb) {
+    var privSide = document.createElement('span');
+    privSide.className = 're-comment-private-side';
     var privHidden = privCb.previousElementSibling;
-    if (privHidden && privHidden.type === 'hidden' && privHidden.name === privCb.name) privRow.appendChild(privHidden);
-    privRow.appendChild(privCb);
+    if (privHidden && privHidden.type === 'hidden' && privHidden.name === privCb.name) privSide.appendChild(privHidden);
+    privSide.appendChild(privCb);
     var privLbl = document.querySelector('label[for="issue_private_notes"]');
-    if (privLbl) privRow.appendChild(privLbl);
-    box.insertBefore(privRow, btn);
+    if (privLbl) privSide.appendChild(privLbl);
+    privRow.appendChild(privSide);
   }
+  if (privRow.firstChild) box.insertBefore(privRow, btn);
   /* Sekcia „Poznámka" v editácii je po presune editora aj private notes prázdna — len rámik.
    * Skrytá textarea v nej ostáva (dátové úložisko komentára, natívny Submit ju pošle). */
   var notesFs = document.getElementById('add_notes');
@@ -638,6 +646,7 @@ export function liveComments(editor, textarea) {
   function filesUploading() { return tokenInputs().some(function (i) { return !i.value; }); }
   function resetExtras() {
     if (privCb) privCb.checked = false;
+    if (supCb) supCb.checked = false;
     Array.prototype.forEach.call(filesRow.querySelectorAll('.attachments_fields > span'), function (s) {
       if (s.parentNode) s.parentNode.removeChild(s);
     });
@@ -724,6 +733,7 @@ export function liveComments(editor, textarea) {
     var attrs = pending();
     var extra = [];
     attrs.forEach(function (a) { a.values.forEach(function (v) { extra.push([a.name, v]); }); });
+    if (supCb && supCb.checked) extra.push([supCb.name, '1']);
     var withFiles = pendingFiles() > 0;
     var fields = { notes: val };
     if (privCb) fields.private_notes = privCb.checked ? '1' : '0';

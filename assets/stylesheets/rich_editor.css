@@ -207,6 +207,9 @@
    editor → [ ] Súkromné poznámky → Pridať komentár → Vybrať súbory → zoznam súborov */
 .re-comment-private { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.85rem; }
 .re-comment-private label { margin: 0; cursor: pointer; }
+.re-comment-private .nf-suppress,
+.re-comment-private-side { display: inline-flex; align-items: center; gap: 6px; }
+.re-comment-private-side { margin-left: auto; } /* súkromné poznámky vpravo */
 .re-comment-files { margin-top: 10px; font-size: 0.85rem; }
 .re-comment-files #new-attachments { display: block !important; }
 .re-comment-files .attachments_form { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
