@@ -273,3 +273,8 @@ body.re-live-desc #all_attributes p:has(> textarea#issue_description) { display:
   outline: 2px solid #d9534f;
   outline-offset: 1px;
 }
+
+/* Formulár podúlohy: jadro pridáva „Create and follow" (vytvoriť a otvoriť podúlohu). V češtine má
+   rovnaký text ako „Create and add another" a ľudia ho brali ako duplikát — nechávame len
+   Vytvoriť a Vytvoriť a pokračovať (rozhodnutie Martina, 6. 10. 2026). */
+#issue-form input[type="submit"][name="follow"] { display: none; }

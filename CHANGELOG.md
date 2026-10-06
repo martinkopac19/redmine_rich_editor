@@ -31,6 +31,11 @@ left side; private notes move to the right side of the same row. The checkbox is
 comment (`suppress_mail=1`) and cleared after a successful save. A twin checkbox (same name, state
 kept in sync) sits above *Submit* in the Edit section, for changes without a comment.
 
+**Subtask form: “Create and follow” is hidden.** When a subtask is added from its parent, core shows
+a third button, *Create and follow* (create and open the subtask). In Czech it has the same label as
+*Create and add another*, so it looked like a duplicate. Only *Create* and *Create and add another*
+remain (CSS, the button stays in the DOM).
+
 ## 0.17.9
 
 **Enter after a bold section label starts normal text.** Issue templates (Bug, Feature) use
