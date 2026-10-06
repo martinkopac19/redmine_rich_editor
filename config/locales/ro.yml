@@ -40,3 +40,6 @@ ro:
   re_setting_merge_window_hint: "Se măsoară de la crearea intrării anterioare din istoric, așa că o intrare nu este niciodată rescrisă mai mult de atât. 1–60, implicit 30."
   re_task_failed: "Bifa nu a putut fi salvată"
   re_task_stale: "Comentariul s-a modificat între timp — reîncărcați pagina"
+  # Jadro: „Create and follow" (vytvoriť podúlohu a otvoriť ju) — v cs rovnaký text ako „Create and continue",
+  # v sk/hu/ro nepreložené. Tlačidlá pri pridávaní podúlohy tak vyzerali ako duplikát.
+  button_create_and_follow: "Creează și deschide"

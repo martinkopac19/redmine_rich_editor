@@ -31,6 +31,12 @@ left side; private notes move to the right side of the same row. The checkbox is
 comment (`suppress_mail=1`) and cleared after a successful save. A twin checkbox (same name, state
 kept in sync) sits above *Submit* in the Edit section, for changes without a comment.
 
+**Subtask form: the three create buttons have distinct labels.** Core translates *Create and follow*
+(create the subtask and open it) the same as *Create and continue* in Czech and leaves it in English
+in Slovak, Hungarian and Romanian, so adding a subtask showed what looked like a duplicate button.
+The plugin locales override `button_create_and_follow`: „Vytvořit a otevřít“, „Vytvoriť a otvoriť“,
+„Létrehozás és megnyitás“, „Creează și deschide“.
+
 ## 0.17.9
 
 **Enter after a bold section label starts normal text.** Issue templates (Bug, Feature) use

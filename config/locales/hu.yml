@@ -40,3 +40,6 @@ hu:
   re_setting_merge_window_hint: "Az előző történet-bejegyzés létrehozásától mérve, így egy bejegyzés sosem íródik át ennél hosszabb ideig. 1–60, alapértelmezés: 30."
   re_task_failed: "A jelölést nem sikerült menteni"
   re_task_stale: "A megjegyzés időközben megváltozott — töltse újra az oldalt"
+  # Jadro: „Create and follow" (vytvoriť podúlohu a otvoriť ju) — v cs rovnaký text ako „Create and continue",
+  # v sk/hu/ro nepreložené. Tlačidlá pri pridávaní podúlohy tak vyzerali ako duplikát.
+  button_create_and_follow: "Létrehozás és megnyitás"

@@ -40,3 +40,6 @@ sk:
   re_setting_merge_window_hint: "Meria sa od vzniku predchádzajúceho záznamu, takže sa jeden záznam nikdy neprepisuje dlhšie. 1–60, predvolené 30."
   re_task_failed: "Zaškrtnutie sa nepodarilo uložiť"
   re_task_stale: "Komentár sa medzitým zmenil — načítaj stránku znova"
+  # Jadro: „Create and follow" (vytvoriť podúlohu a otvoriť ju) — v cs rovnaký text ako „Create and continue",
+  # v sk/hu/ro nepreložené. Tlačidlá pri pridávaní podúlohy tak vyzerali ako duplikát.
+  button_create_and_follow: "Vytvoriť a otvoriť"
