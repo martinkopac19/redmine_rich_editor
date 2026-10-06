@@ -223,6 +223,64 @@ begin
     check("CRLF vs LF", nt.("a\r\n{{thumbnail(x.png)}}") == nt.("a\n![alt](x.png)"), true)
     check("<url> vs hola url", nt.("viz <https://a.cz/b>") == nt.("viz https://a.cz/b"), true)
     check("iny subor", nt.("![](x.png)") == nt.("![](y.png)"), false)
+
+    # --- 14.–20. autor upravi vlastnu ulohu do 30 minut od zalozenia ---
+    # uloha "zalozena" pred 5 min, autor = user; other sleduje a dostava vsetko
+    Issue.find(iss).update_columns(author_id: user.id, created_on: 5.minutes.ago)
+    other.update_columns(mail_notification: 'all')
+    Watcher.create!(watchable: Issue.find(iss), user: other) unless Watcher.where(watchable_type: 'Issue', watchable_id: iss, user_id: other.id).exists?
+    mailed_other = -> { ActionMailer::Base.deliveries.any? { |m| (Array(m.to) + Array(m.bcc)).include?(other.mail) } }
+    fresh = -> { start_fresh_burst!(iss); ActionMailer::Base.deliveries.clear }
+
+    puts "\n[14] autor do 30 min: zmena popisu (zivy editor)"
+    fresh.()
+    n = journal_count(iss)
+    live_save!(iss, user, { description: "#{base} autor-a" })
+    check("zaznam v historii je", journal_count(iss), n + 1)
+    check("sledujuci nedostal mail", mailed_other.(), false)
+
+    puts "\n[15] autor do 30 min: zmena nazvu cez formular"
+    fresh.()
+    live_save!(iss, user, { subject: "#{Issue.find(iss).subject} (upravene)" }, live: false)
+    check("sledujuci nedostal mail", mailed_other.(), false)
+
+    puts "\n[16] autor do 30 min: zmena popisu, ktora prida @zmienku"
+    fresh.()
+    live_save!(iss, user, { description: "#{base} pozri @#{other.login}" }, live: false)
+    check("mail odisiel", mailed_other.(), true)
+
+    puts "\n[17] autor do 30 min: zmena stavu"
+    fresh.()
+    ch = Issue.find(iss)
+    new_st = ch.new_statuses_allowed_to(user).detect { |st| st.id != ch.status_id }
+    live_save!(iss, user, { status_id: new_st.id }, live: false)
+    check("mail odisiel", mailed_other.(), true)
+
+    puts "\n[18] iny clovek do 30 min: zmena popisu"
+    fresh.()
+    live_save!(iss, other, { description: "#{base} cudzi" }, live: false)
+    check("mail odisiel (autorovi)", ActionMailer::Base.deliveries.size >= 1, true)
+
+    puts "\n[19] autor po 30 min: zmena popisu"
+    Issue.find(iss).update_columns(created_on: 31.minutes.ago)
+    fresh.()
+    live_save!(iss, user, { description: "#{base} neskoro" })
+    check("mail odisiel", mailed_other.(), true)
+
+    puts "\n[20] tichy zaznam z lehoty + uprava po lehote: nezlucia sa, mail odide"
+    Issue.find(iss).update_columns(created_on: 29.minutes.ago)
+    fresh.()
+    live_save!(iss, user, { description: "#{base} este v lehote" })
+    check("v lehote: bez mailu", mailed_other.(), false)
+    # cas posunieme o 11 min: uloha zalozena pred 40 min, tichy zaznam pred 11 min (este v lehote,
+    # aj v okne zlucovania) — dalsia uprava "teraz" je uz po lehote
+    Issue.find(iss).update_columns(created_on: 40.minutes.ago)
+    last_journal(iss).update_columns(created_on: 11.minutes.ago)
+    ActionMailer::Base.deliveries.clear
+    n = journal_count(iss)
+    live_save!(iss, user, { description: "#{base} po lehote" })
+    check("novy zaznam (nezlucilo sa)", journal_count(iss), n + 1)
+    check("mail odisiel", mailed_other.(), true)
   end
 ensure
   conn.rollback_transaction

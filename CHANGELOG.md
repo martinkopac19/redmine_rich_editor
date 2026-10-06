@@ -36,6 +36,15 @@ a third button, *Create and follow* (create and open the subtask). In Czech it h
 *Create and add another*, so it looked like a duplicate. Only *Create* and *Create and add another*
 remain (CSS, the button stays in the DOM).
 
+**The author’s own edits right after creating an issue don’t notify.** The author creates an issue
+(“new issue” mail goes out) and polishes the subject or description a few minutes later — every such
+edit sent another mail about the same thing. Now, when the author changes only the subject and/or
+description (optionally adding attachments, e.g. a pasted screenshot) within 30 minutes of creating
+the issue, the change is kept in the history but `journal.notify = false` (`RichEditor::AuthorGrace`,
+any save path: live editor, form, API). An edit that adds a new @mention notifies as usual, so does
+a comment or any other field. A live edit after the 30 minutes is never folded into a silent journal
+from the grace period. Tests: `extra/selftest_merge.rb` scenarios 14–20.
+
 ## 0.17.9
 
 **Enter after a bold section label starts normal text.** Issue templates (Bug, Feature) use

@@ -71,6 +71,9 @@ module RichEditor
 
       prev.reload
       return false unless mergeable_journal?(prev)
+      # Úprava po 30-minútovej lehote autora sa NEzlúči do tichého záznamu z lehoty — inak by
+      # zlúčenie (ktoré druhý mail vždy potlačí) predĺžilo ticho aj na neskoršie zmeny.
+      return false if AuthorGrace.within?(issue, prev) && !AuthorGrace.within?(issue, journal)
 
       Journal.transaction(requires_new: true) do
         journal.notify = false # bez tohto odíde druhý mail aj po zmazaní záznamu
@@ -156,6 +159,46 @@ module RichEditor
     end
   end
 
+  # ÚPRAVA VLASTNEJ ÚLOHY TESNE PO ZALOŽENÍ — BEZ NOTIFIKÁCIE.
+  #
+  # Autor úlohu založí (odíde mail „nová úloha") a do pár minút si v nej doladí názov alebo popis.
+  # Každá taká úprava poslala ďalší mail o tom istom. Rozhodnutie (Martin, 6. 10. 2026): keď autor
+  # do 30 minút od založenia mení LEN názov / popis (prípadne pri tom pridá prílohu, napr. vložený
+  # screenshot), záznam v histórii ostane, ale notifikácia neodíde.
+  #
+  # Výnimka: úprava, ktorou v popise PRIBUDNE @zmienka, notifikuje normálne — inak by sa zmienený
+  # človek o úlohe nedozvedel. Komentár, zmena stavu, riešiteľa či iného poľa notifikujú vždy.
+  # Platí pre každé uloženie (živý editor, formulár aj API).
+  module AuthorGrace
+    WINDOW = 30.minutes
+
+    module_function
+
+    def within?(issue, journal)
+      issue.created_on && journal.created_on && journal.user_id == issue.author_id &&
+        journal.created_on <= issue.created_on + WINDOW
+    end
+
+    def call(issue, journal)
+      return false if LiveMerge.settings['enabled'].to_s == '0'
+      return false unless journal.persisted? && journal.notes.blank? && within?(issue, journal)
+
+      details = journal.details.to_a
+      return false unless details.any? { |d| d.property == 'attr' }
+      return false unless details.all? do |d|
+        (d.property == 'attr' && %w[subject description].include?(d.prop_key)) ||
+          (d.property == 'attachment' && d.value.present?)
+      end
+      return false if issue.respond_to?(:mentioned_users) && Array(issue.mentioned_users).any?
+
+      journal.notify = false
+      true
+    rescue StandardError => e
+      Rails.logger&.warn("[rich_editor] author grace skipped: #{e.class}: #{e.message}")
+      false
+    end
+  end
+
   class MergeHooks < Redmine::Hook::ViewListener
     # `controller_issues_edit_after_save` (issues_controller.rb:681) beží VNÚTRI `Issue.transaction`,
     # teda pred commitom. Práve preto sa tu ešte dá potlačiť notifikácia a zmazanie záznamu je
@@ -165,6 +208,8 @@ module RichEditor
       issue   = context[:issue]
       journal = context[:journal]
       return unless params && issue.is_a?(Issue) && journal.is_a?(Journal)
+
+      RichEditor::AuthorGrace.call(issue, journal)
 
       # ZÁMERNE len uloženia zo živého editora. Bežné odoslanie formulára, hromadná úprava ani
       # REST API sa nezlučujú — tam je uloženie vedomý akt a jeden záznam = jedno „Submit".
