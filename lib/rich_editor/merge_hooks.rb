@@ -36,8 +36,13 @@ module RichEditor
     # v `settings` — default sa použije len keď riadok neexistuje. Preto všade vlastný fallback
     # (chýbajúci kľúč = zapnuté / 30 minút). Na klone aj na testovacom serveri je v DB uložené
     # len `enabled`, takže o dĺžke okna reálne rozhoduje TENTO fallback, nie default v `init.rb`.
+    # Plugin zapnutý (ticho pri obrázku a pri úprave autora). Zlučovanie má navyše vlastný prepínač.
+    def plugin_enabled?
+      settings['enabled'].to_s != '0'
+    end
+
     def enabled?
-      settings['enabled'].to_s != '0' && settings['merge_live_edits'].to_s != '0'
+      plugin_enabled? && settings['merge_live_edits'].to_s != '0'
     end
 
     def window
@@ -128,7 +133,7 @@ module RichEditor
     module_function
 
     def call(journal)
-      return false if LiveMerge.settings['enabled'].to_s == '0'
+      return false unless LiveMerge.plugin_enabled?
       return false unless journal.persisted? && journal.notes.blank?
 
       details = journal.details.to_a
@@ -180,7 +185,7 @@ module RichEditor
     end
 
     def call(issue, journal)
-      return false if LiveMerge.settings['enabled'].to_s == '0'
+      return false unless LiveMerge.plugin_enabled?
       return false unless journal.persisted? && journal.notes.blank? && within?(issue, journal)
 
       details = journal.details.to_a
