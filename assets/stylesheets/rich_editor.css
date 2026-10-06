@@ -210,6 +210,10 @@
 .re-comment-private .nf-suppress,
 .re-comment-private-side { display: inline-flex; align-items: center; gap: 6px; }
 .re-comment-private-side { margin-left: auto; } /* súkromné poznámky vpravo */
+/* dvojča „Neposílat notifikace" nad Potvrdiť v editácii */
+.re-submit-suppress { margin: 8px 0; font-size: 0.85rem; }
+.re-submit-suppress .nf-suppress { display: inline-flex; align-items: center; gap: 6px; }
+.re-submit-suppress label { margin: 0; cursor: pointer; }
 .re-comment-files { margin-top: 10px; font-size: 0.85rem; }
 .re-comment-files #new-attachments { display: block !important; }
 .re-comment-files .attachments_form { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }

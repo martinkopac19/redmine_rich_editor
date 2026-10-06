@@ -548,6 +548,25 @@ export function liveComments(editor, textarea) {
     privRow.appendChild(privSide);
   }
   if (privRow.firstChild) box.insertBefore(privRow, btn);
+  /* To isté políčko aj nad „Potvrdiť" v editácii — zmena bez komentára. Dvojča má rovnaké meno
+   * (`suppress_mail`), takže natívny Submit pošle '1', keď je zaškrtnuté ktorékoľvek; stav držíme
+   * zhodný, aby obe miesta ukazovali to isté. */
+  var supCb2 = null;
+  var commitBtn = form && supWrap ? form.querySelector(':scope > input[type="submit"][name="commit"]') : null;
+  if (commitBtn) {
+    var supRow = document.createElement('div');
+    supRow.className = 're-submit-suppress';
+    var supWrap2 = supWrap.cloneNode(true);
+    supCb2 = supWrap2.querySelector('input[type="checkbox"]');
+    var supLbl2 = supWrap2.querySelector('label');
+    supCb2.id = supCb.id + '_submit';
+    supCb2.removeAttribute('form');
+    if (supLbl2) supLbl2.setAttribute('for', supCb2.id);
+    supRow.appendChild(supWrap2);
+    form.insertBefore(supRow, commitBtn);
+    supCb.addEventListener('change', function () { supCb2.checked = supCb.checked; });
+    supCb2.addEventListener('change', function () { supCb.checked = supCb2.checked; });
+  }
   /* Sekcia „Poznámka" v editácii je po presune editora aj private notes prázdna — len rámik.
    * Skrytá textarea v nej ostáva (dátové úložisko komentára, natívny Submit ju pošle). */
   var notesFs = document.getElementById('add_notes');
@@ -647,6 +666,7 @@ export function liveComments(editor, textarea) {
   function resetExtras() {
     if (privCb) privCb.checked = false;
     if (supCb) supCb.checked = false;
+    if (supCb2) supCb2.checked = false;
     Array.prototype.forEach.call(filesRow.querySelectorAll('.attachments_fields > span'), function (s) {
       if (s.parentNode) s.parentNode.removeChild(s);
     });

@@ -24,11 +24,12 @@ description text, wrote a history entry and notified every watcher.
 - Tests: `extra/selftest_merge.rb` scenarios 8–13, `extra/image_size_silent_cdp_test.mjs`
   (changes the size and puts it back; both silent).
 
-**Comment row: “Don’t send notifications” on the left, private notes on the right.** When
+**Comment row: “Mute notification” on the left, private notes on the right.** When
 redmine_notification_filter renders its `.nf-suppress` checkbox (only for users with the
 `suppress_mail_issue_switch` permission), the editor moves it to the row above *Add comment*,
 left side; private notes move to the right side of the same row. The checkbox is sent with the
-comment (`suppress_mail=1`) and cleared after a successful save.
+comment (`suppress_mail=1`) and cleared after a successful save. A twin checkbox (same name, state
+kept in sync) sits above *Submit* in the Edit section, for changes without a comment.
 
 ## 0.17.9
 
