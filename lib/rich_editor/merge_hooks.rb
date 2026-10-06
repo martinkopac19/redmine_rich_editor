@@ -111,6 +111,51 @@ module RichEditor
     end
   end
 
+  # TICHÁ ZMENA VEĽKOSTI OBRÁZKA.
+  #
+  # Popis issue je na detaile zároveň čítacia plocha a upraviť ho smie veľa ľudí. Kto si len
+  # prepne náhľad (malý ↔ plná šírka, − / +), zmení tým text popisu → záznam v histórii
+  # a notifikácia všetkým sledujúcim, hoci obsahovo sa nezmenilo nič.
+  #
+  # Rozhodnutie (Martin, 6. 10. 2026): takú zmenu uložiť ÚPLNE POTICHU — bez záznamu v histórii
+  # a bez notifikácie. Čo je „len veľkosť", rozhoduje server porovnaním textov, nie klient:
+  # popis pred a po sa musí zhodovať, keď sa každý obrázok (`![…](f)` aj `{{thumbnail(f, size=N)}}`)
+  # zredukuje na samotný názov súboru. Akákoľvek iná zmena = bežný záznam ako doteraz.
+  module ImageOnly
+    module_function
+
+    def call(journal)
+      return false if LiveMerge.settings['enabled'].to_s == '0'
+      return false unless journal.persisted? && journal.notes.blank?
+
+      details = journal.details.to_a
+      return false unless details.size == 1
+      d = details.first
+      return false unless d.property == 'attr' && d.prop_key == 'description'
+      return false unless neutral(d.old_value) == neutral(d.value)
+
+      Journal.transaction(requires_new: true) do
+        journal.notify = false # viď LiveMerge — samotné destroy mail nepotlačí
+        journal.destroy
+      end
+      true
+    rescue StandardError => e
+      Rails.logger&.warn("[rich_editor] silent image change skipped: #{e.class}: #{e.message}")
+      false
+    end
+
+    # Text bez informácie o veľkosti/režime obrázkov. Normalizujú sa aj koncovky riadkov
+    # (textarea posiela \r\n) a `<https://…>` — editor holú URL pri prvom uložení obalí
+    # zátvorkami (0.17.8), Redmine ju vykreslí rovnako.
+    def neutral(text)
+      text.to_s.gsub("\r\n", "\n")
+          .gsub(/\{\{\s*thumbnail\(\s*([^,)]+?)\s*(?:,[^)]*)?\)\s*\}\}/) { "\u0000img(#{$1})" }
+          .gsub(/!\[[^\]]*\]\(\s*([^)\s]+)\s*\)/) { "\u0000img(#{$1})" }
+          .gsub(%r{<(https?://[^>\s]+)>}, '\1')
+          .strip
+    end
+  end
+
   class MergeHooks < Redmine::Hook::ViewListener
     # `controller_issues_edit_after_save` (issues_controller.rb:681) beží VNÚTRI `Issue.transaction`,
     # teda pred commitom. Práve preto sa tu ešte dá potlačiť notifikácia a zmazanie záznamu je
@@ -125,6 +170,7 @@ module RichEditor
       # REST API sa nezlučujú — tam je uloženie vedomý akt a jeden záznam = jedno „Submit".
       return unless params[:re_live].to_s == '1'
       return if params[:time_entry].present?
+      return if RichEditor::ImageOnly.call(journal)
 
       RichEditor::LiveMerge.call(issue, journal)
     end

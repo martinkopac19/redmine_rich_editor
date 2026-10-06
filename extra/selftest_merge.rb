@@ -179,6 +179,50 @@ begin
     changer.save!
     live_save!(iss, user, { description: "#{base} s1" })
     check("nezlucilo sa", journal_count(iss) - n, 2)
+
+    # --- 8.–13. ticha zmena velkosti obrazka (bez zaznamu, bez mailu) ---
+    img = ->(md) { "#{base}\n\nObrazok:\n\n#{md}\n\nkoniec" }
+    start_fresh_burst!(iss)
+    live_save!(iss, user, { description: img.('{{thumbnail(shot.png, size=350)}}') }, live: false)
+    start_fresh_burst!(iss)
+
+    puts "\n[8] ziva zmena len velkosti nahladu"
+    n = journal_count(iss)
+    ActionMailer::Base.deliveries.clear
+    live_save!(iss, user, { description: img.('{{thumbnail(shot.png, size=500)}}') })
+    check("ziadny novy zaznam v historii", journal_count(iss), n)
+    check("ziadny mail", ActionMailer::Base.deliveries.size, 0)
+    check("popis je ulozeny", Issue.find(iss).description.include?('size=500'), true)
+
+    puts "\n[9] ziva zmena nahlad -> plna sirka"
+    n = journal_count(iss)
+    live_save!(iss, user, { description: img.('![](shot.png)') })
+    check("ziadny novy zaznam v historii", journal_count(iss), n)
+    check("ziadny mail", ActionMailer::Base.deliveries.size, 0)
+
+    puts "\n[10] velkost + zmena textu"
+    n = journal_count(iss)
+    live_save!(iss, user, { description: img.('{{thumbnail(shot.png, size=200)}}') + ' a text' })
+    check("pribudol zaznam", journal_count(iss) - n, 1)
+    check("mail odisiel", ActionMailer::Base.deliveries.size >= 1, true)
+
+    puts "\n[11] iny obrazok (iny subor) nie je len velkost"
+    start_fresh_burst!(iss)
+    n = journal_count(iss)
+    live_save!(iss, user, { description: img.('{{thumbnail(ine.png, size=200)}}') + ' a text' })
+    check("pribudol zaznam", journal_count(iss) - n, 1)
+
+    puts "\n[12] len velkost, ale cez formular (bez re_live)"
+    start_fresh_burst!(iss)
+    n = journal_count(iss)
+    live_save!(iss, user, { description: img.('{{thumbnail(ine.png, size=650)}}') + ' a text' }, live: false)
+    check("pribudol zaznam", journal_count(iss) - n, 1)
+
+    puts "\n[13] neutral(): CRLF a <url> nevadia, iny subor ano"
+    nt = ->(s) { RichEditor::ImageOnly.neutral(s) }
+    check("CRLF vs LF", nt.("a\r\n{{thumbnail(x.png)}}") == nt.("a\n![alt](x.png)"), true)
+    check("<url> vs hola url", nt.("viz <https://a.cz/b>") == nt.("viz https://a.cz/b"), true)
+    check("iny subor", nt.("![](x.png)") == nt.("![](y.png)"), false)
   end
 ensure
   conn.rollback_transaction

@@ -8,7 +8,9 @@
      - existujúca príloha → URL z mapy `RE_CONFIG.atts` (naplní hooks.rb na detaile issue). */
 import Image from '@tiptap/extension-image';
 import { mergeAttributes } from '@tiptap/core';
+import { Plugin } from '@tiptap/pm/state';
 import { THUMB_MARK, THUMB_DEFAULT } from './md-compat.js';
+import { attachmentPageUrl } from './attachments.js';
 
 function atts() { return (window.RE_CONFIG || {}).atts || {}; }
 
@@ -38,6 +40,65 @@ export function attIdFor(filename) {
   var a = atts()[filename];
   var m = /\/attachments\/(?:download\/|thumbnail\/)?(\d+)/.exec((a && a.u) || '');
   return m ? m[1] : null;
+}
+
+/* Obrázok v novom okne. Editor je na detaile issue zároveň čítacia plocha a klik obrázok len
+   označí (lišta veľkosti) — bez tohto sa obrázok nedal pozrieť v plnej veľkosti. Ide na stránku
+   prílohy ako natívny Redmine náhľad; čerstvý upload stránku ešte nemá → aspoň jeho blob. */
+export function openImage(attrs) {
+  var a = attrs || {};
+  var href = attachmentPageUrl(a.attId || attIdFor(a.filename)) || a.src;
+  if (href) window.open(href, '_blank', 'noopener');
+}
+
+function imageMarkdown(attrs) {
+  var f = attrs.filename || attrs.src || '';
+  if (attrs.display === 'thumb') return '{{thumbnail(' + f + ', size=' + (attrs.size || THUMB_DEFAULT) + ')}}';
+  return '![' + (attrs.alt || '') + '](' + f + ')';
+}
+
+/* Zmena LEN veľkosti/režimu obrázkov → nový Markdown vznikne výmenou zápisu tých obrázkov
+   v PÔVODNOM texte, nie novou serializáciou celého dokumentu. Tá by starý popis preformátovala
+   (`1)` → `1.`, prázdne riadky, `->` → `-&gt;`…) a server by zmenu nespoznal ako „len obrázok"
+   (merge_hooks.rb, ImageOnly) → záznam v histórii a notifikácia. Na 60 reálnych popisoch
+   by bez tohto prešlo potichu len 7.
+   Vráti null, keď to nie je čistá zmena obrázkov alebo text nesedí s dokumentom — volajúci
+   potom serializuje celý dokument ako doteraz. */
+var IMG_MD = /\{\{\s*thumbnail\(\s*([^,)]+?)\s*(?:,[^)]*)?\)\s*\}\}|!\[[^\]]*\]\(\s*([^)\s]+)\s*\)/g;
+
+function imagesOf(doc) {
+  var out = [];
+  doc.descendants(function (n) { if (n.type.name === 'image') out.push(n.attrs); });
+  return out;
+}
+
+function withoutImageLook(doc) {
+  return JSON.stringify(doc.toJSON(), function (k, v) {
+    return (v && v.type === 'image' && v.attrs) ? { type: 'image', f: v.attrs.filename } : v;
+  });
+}
+
+export function patchImageMarkdown(prevDoc, nextDoc, prevMd) {
+  if (prevDoc.content.size !== nextDoc.content.size) return null; // písanie mení veľkosť, obrázok nie
+  var before = imagesOf(prevDoc);
+  var after = imagesOf(nextDoc);
+  if (!before.length || before.length !== after.length) return null;
+  if (withoutImageLook(prevDoc) !== withoutImageLook(nextDoc)) return null;
+
+  var hits = [];
+  var m;
+  IMG_MD.lastIndex = 0;
+  while ((m = IMG_MD.exec(prevMd))) hits.push({ at: m.index, len: m[0].length, f: (m[1] || m[2] || '').trim() });
+  if (hits.length !== before.length) return null;
+  for (var i = 0; i < hits.length; i++) if (hits[i].f !== before[i].filename) return null;
+
+  var out = prevMd;
+  for (var j = hits.length - 1; j >= 0; j--) {
+    var a = before[j], b = after[j];
+    if (a.display === b.display && a.size === b.size) continue;
+    out = out.slice(0, hits[j].at) + imageMarkdown(b) + out.slice(hits[j].at + hits[j].len);
+  }
+  return out;
 }
 
 export var ReImage = Image.extend({
@@ -100,17 +161,29 @@ export var ReImage = Image.extend({
     }
     return ['img', out];
   },
+  // Dvojklik alebo Ctrl/Cmd+klik otvorí obrázok rovno, bez lišty.
+  addProseMirrorPlugins: function () {
+    function open(node, event) {
+      if (node.type.name !== 'image') return false;
+      event.preventDefault();
+      openImage(node.attrs);
+      return true;
+    }
+    return [new Plugin({
+      props: {
+        handleClickOn: function (view, pos, node, nodePos, event, direct) {
+          return direct && (event.ctrlKey || event.metaKey) && open(node, event);
+        },
+        handleDoubleClickOn: function (view, pos, node, nodePos, event, direct) {
+          return direct && open(node, event);
+        }
+      }
+    })];
+  },
   addStorage: function () {
     return {
       markdown: {
-        serialize: function (state, node) {
-          var f = node.attrs.filename || node.attrs.src || '';
-          if (node.attrs.display === 'thumb') {
-            state.write('{{thumbnail(' + f + ', size=' + (node.attrs.size || THUMB_DEFAULT) + ')}}');
-          } else {
-            state.write('![' + (node.attrs.alt || '') + '](' + f + ')');
-          }
-        }
+        serialize: function (state, node) { state.write(imageMarkdown(node.attrs)); }
       }
     };
   }

@@ -11,7 +11,7 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
-import { ReImage } from './image.js';
+import { ReImage, patchImageMarkdown } from './image.js';
 import { preprocess } from './md-compat.js';
 import { ReHardBreak } from './hardbreak.js';
 import { BoldLabelEnter } from './boldlabel.js';
@@ -173,7 +173,10 @@ function mountOver(textarea) {
       },
       onUpdate: function (props) {
         reWriting = true;
-        textarea.value = props.editor.storage.markdown.getMarkdown();
+        // len veľkosť/režim obrázka → zvyšok textu ostane bajt po bajte (viď image.js)
+        var md = null;
+        try { md = patchImageMarkdown(props.transaction.before, props.editor.state.doc, textarea.value || ''); } catch (e) {}
+        textarea.value = md != null ? md : props.editor.storage.markdown.getMarkdown();
         reWriting = false;
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
       }

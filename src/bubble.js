@@ -1,11 +1,11 @@
 /* Bublinové lišty (vlastné, bez tippy):
      - po označení textu: veľkosť textu, formátovanie, bloky (odrážky/číslovanie/checklist/kód), odkaz
-     - po kliknutí na obrázok: Malý náhľad / Plná šírka / Len odkaz + veľkosť náhľadu
+     - po kliknutí na obrázok: Otvoriť / Malý náhľad / Plná šírka / Len odkaz + veľkosť náhľadu
      - nad odkazom (myšou alebo kurzorom): Otvoriť / Upraviť odkaz / Zobraziť ako obrázok */
 import { getMarkRange } from '@tiptap/core';
 import { NodeSelection } from '@tiptap/pm/state';
 import { THUMB_SIZES, THUMB_DEFAULT } from './md-compat.js';
-import { attUrl, attIdFor } from './image.js';
+import { attUrl, attIdFor, openImage } from './image.js';
 import { attachmentPageUrl, filenameForAttId, previewForAttId, attachmentThumbUrl } from './attachments.js';
 import { openLinkDialog, insertLinkedLabel } from './linkdialog.js';
 
@@ -258,6 +258,8 @@ function buildImageBar(editor) {
     apply({ display: 'thumb', size: next });
   }
 
+  mkBtn(bar, RE_I18N.openLink || 'Open', RE_I18N.openLink || 'Open', 're-label', function () { openImage(attrs()); }, 'img-open');
+  mkSep(bar);
   var bThumb = mkBtn(bar, RE_I18N.imgSmall || 'Small preview', RE_I18N.imgSmall || 'Small preview', 're-label', function () { apply({ display: 'thumb' }); }, 'img-thumb');
   var bFull = mkBtn(bar, RE_I18N.imgFull || 'Full width', RE_I18N.imgFull || 'Full width', 're-label', function () { apply({ display: 'full' }); }, 'img-full');
   mkBtn(bar, RE_I18N.imgLink || 'Link only', RE_I18N.imgLink || 'Link only', 're-label', toLink, 'img-link');
