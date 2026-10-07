@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.18.1
+
+**A pasted image that was deleted from the editor is no longer attached.** The upload starts the
+moment an image is pasted, and its hidden `attachments[…]` fields were added to the form right away.
+Deleting the image from the editor left the fields in place, so whoever pasted, deleted and pasted
+again (e.g. to move the image) had one image in the comment but three attachments under it
+(#54514, note-9: three uploads of the same screenshot within two minutes).
+
+- The editor tracks the uploads it inserted (`trackUpload` in `attachments.js`). When the image
+  (or the `attachment:name` link of another file) disappears from the editor, its fields are
+  disabled; Ctrl+Z brings the image back and enables them again.
+- The comment submit, the live auto-save and the save on leaving the page skip disabled fields.
+- A pasted or dropped image now shows up in the editor immediately, half-transparent while it
+  uploads; before, it appeared only after the upload had finished. If the upload fails, the image
+  is removed and "Upload failed" is shown above the editor.
+- New test `extra/paste_image_feedback_cdp_test.mjs` (slow upload via CDP Fetch, failed upload,
+  delete / undo / paste again).
+
 ## 0.18.0
 
 **Images in the issue description: open in a new window, resizing is silent.** The live description

@@ -67,8 +67,9 @@ export function autosave(fields, opts, _retry) {
   // `form.elements` vidí aj polia s atribútom `form="issue-form"` (prílohy presunuté k lište
   // komentára). Tie patria komentáru — auto-save popisu/názvu ich nesmie „ukradnúť", preto
   // idú len s `opts.comment`. File input (`attachments[dummy][file]`) nie je príloha.
+  // `disabled` = súbor bol z editora zmazaný (attachments.js `trackUpload`) → nepripájať.
   var attInputs = Array.prototype.filter.call(form.elements, function (inp) {
-    return /^attachments\[/.test(inp.name || '') && inp.type !== 'file' &&
+    return /^attachments\[/.test(inp.name || '') && inp.type !== 'file' && !inp.disabled &&
       (opts.comment || !(inp.closest && inp.closest('.re-comment-box')));
   });
   attInputs.forEach(function (inp) { body.append(inp.name, inp.value); });
@@ -198,7 +199,7 @@ function autosaver(getFields, ind) {
     if (!f) return 0;
     return Array.prototype.filter.call(
       f.querySelectorAll('input[name^="attachments["][name$="[token]"]'),
-      function (i) { return !!i.value; }
+      function (i) { return !!i.value && !i.disabled; }
     ).length;
   }
 
@@ -283,7 +284,7 @@ function beaconSave(fields) {
   var lvEl = form.querySelector('input[name="issue[lock_version]"]');
   if (lvEl) body.append('issue[lock_version]', lvEl.value);
   Object.keys(fields).forEach(function (k) { body.append('issue[' + k + ']', fields[k] == null ? '' : fields[k]); });
-  Array.prototype.slice.call(form.querySelectorAll('input[name^="attachments["]'))
+  Array.prototype.slice.call(form.querySelectorAll('input[name^="attachments["]:not([disabled])'))
     .forEach(function (inp) { body.append(inp.name, inp.value); });
   try {
     return navigator.sendBeacon(form.getAttribute('action'),

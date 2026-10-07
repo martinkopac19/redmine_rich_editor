@@ -146,6 +146,8 @@
 
 /* náhľad obrázka v režime "malý" (aj pri novom uploade, kde je src ešte blob plnej veľkosti) */
 .re-editor .ProseMirror img[data-re-display="thumb"] { cursor: pointer; }
+/* čerstvo vložený obrázok, kým sa nahráva (attachments.js showImage) */
+.re-editor .ProseMirror img[data-re-uploading] { opacity: 0.5; cursor: progress; }
 
 /* dialóg odkazu (Ctrl/Cmd+K) — prijme URL aj obrázok z clipboardu */
 .re-link-dialog {

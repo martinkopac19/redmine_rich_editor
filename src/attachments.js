@@ -127,12 +127,16 @@ function noAttachMessage() {
 
 // Tichý neúspech je horší než žiadna funkcia — povedz to nad editorom a po chvíli uprac.
 function noAttachNotice(editor) {
+  editorNotice(editor, noAttachMessage());
+}
+
+function editorNotice(editor, text) {
   var dom = editor.view && editor.view.dom;
   var wrap = dom && dom.closest('.re-editor');
   if (!wrap || wrap.querySelector('.re-attach-note')) return;
   var el = document.createElement('div');
   el.className = 're-attach-note';
-  el.textContent = noAttachMessage();
+  el.textContent = text;
   wrap.appendChild(el);
   setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 5000);
 }
@@ -162,15 +166,48 @@ export function renameClipboardFiles(files) {
 
 // Skryté polia do issue formulára → Redmine súbor priloží pri uložení (aj bez referencie v texte).
 function addFormFields(form, att) {
-  if (!form || !att.token) return;
+  if (!form || !att.token) return [];
   var key = 're' + (++counter);
   var fields = { token: att.token, filename: att.filename, content_type: att.contentType || '' };
-  Object.keys(fields).forEach(function (f) {
+  return Object.keys(fields).map(function (f) {
     var input = document.createElement('input');
     input.type = 'hidden';
     input.name = 'attachments[' + key + '][' + f + ']';
     input.value = fields[f];
     form.appendChild(input);
+    return input;
+  });
+}
+
+/* Súbor vložený do editora a potom z neho zmazaný sa pri uložení NESMIE pripojiť. Skryté polia
+   vznikajú hneď po nahratí, takže kto obrázok vložil, zmazal a vložil znova (napr. kvôli
+   umiestneniu), mal v texte jeden obrázok, ale pod komentárom tri prílohy (#54514, note-9).
+   Polia sa preto len vypnú (`disabled` sa neodosiela), nie zmažú — Ctrl+Z obrázok vráti aj s nimi. */
+function trackUpload(editor, att) {
+  if (!att.inputs || !att.inputs.length) return;
+  (editor.__reTracked = editor.__reTracked || []).push(att);
+  if (!editor.__reTrackOn) {
+    editor.__reTrackOn = true;
+    editor.on('update', function () { syncAttachFields(editor); });
+  }
+  syncAttachFields(editor);
+}
+
+// Je súbor v editore ešte použitý? Obrázok podľa mena, iný súbor ako text `attachment:meno`.
+function referenced(editor, filename) {
+  var hit = false;
+  editor.state.doc.descendants(function (node) {
+    if (hit) return false;
+    if (node.type.name === 'image' && node.attrs.filename === filename) hit = true;
+    else if (node.isText && node.text.indexOf('attachment:' + filename) !== -1) hit = true;
+  });
+  return hit;
+}
+
+function syncAttachFields(editor) {
+  (editor.__reTracked || []).forEach(function (att) {
+    var off = !referenced(editor, att.filename);
+    att.inputs.forEach(function (input) { input.disabled = off; });
   });
 }
 
@@ -222,10 +259,11 @@ function insertRef(editor, att, file) {
 /* Nahrá súbor a priviaže ho na formulár (skryté `attachments[]` polia), ale NIČ nevkladá
    do textu — vloženie si rieši volajúci. Používa to aj dialóg odkazu (Ctrl+K), kde sa
    z prilepeného obrázka robí odkaz, nie náhľad. */
-/* Koľko uploadov práve beží. Auto-save sa v tomto okne musí odložiť: skryté `attachments[…]`
-   polia pridáva `addFormFields` do formulára HNEĎ po nahratí, ale referencia v texte sa vkladá
-   až potom (obrázok navyše čaká na `measure`, timeout 4 s). Uloženie medzitým prílohu k issue
-   pripne skôr, než na ňu v texte existuje odkaz — a je z toho záznam v histórii navyše. */
+/* Koľko uploadov práve beží. Auto-save sa v tomto okne musí odložiť: obrázok je v texte HNEĎ
+   (`showImage`), ale skryté `attachments[…]` polia pridá `addFormFields` až po nahratí. Uloženie
+   medzitým by zapísalo odkaz na prílohu, ktorá ešte nie je pripnutá („Attachment not found").
+   Pri ostatných súboroch je to naopak — odkaz sa vkladá až po nahratí — a uloženie medzitým by
+   prílohu pripla bez odkazu v texte, so záznamom v histórii navyše. */
 var uploadsBusy = 0;
 function uploadBegin() { uploadsBusy++; }
 function uploadEnd() { if (uploadsBusy > 0) uploadsBusy--; }
@@ -239,11 +277,60 @@ export function uploadAndAttach(editor, file) {
   if (!form && window.console) console.warn('[rich_editor] no form for attachments — upload would not be attached');
   uploadBegin();
   return uploadFile(file).then(function (att) {
-    addFormFields(form, att);
+    att.inputs = addFormFields(form, att);
     rememberUpload(att);
     uploadEnd();
     return att;
   }, function (e) { uploadEnd(); throw e; });
+}
+
+/* Obrázok sa v editore ukáže HNEĎ z blob URL a upload beží na pozadí. Predtým sa objavil až po
+   nahratí — pri väčšom screenshote sa sekundu-dve nedialo nič a nebolo jasné, či vloženie
+   zabralo. Kým sa nahráva, je polopriehľadný (`uploading`).
+   Meno súboru poznáme vopred (`uploadFile` ho neprepisuje), takže odkaz v texte je hneď správny;
+   uloženie komentára aj auto-save počkajú na `uploadsPending()`. Vracia blob URL, alebo null. */
+function showImage(editor, file) {
+  var src;
+  try { src = URL.createObjectURL(file); } catch (e) { return Promise.resolve(null); }
+  var canThumb = thumbnailable({ filename: file.name });
+  return (canThumb ? measure(src) : Promise.resolve({ w: 0, h: 0 })).then(function (dim) {
+    var big = dim.w > BIG_W || dim.h > BIG_H;
+    editor.chain().focus().insertContent({
+      type: 'image',
+      attrs: {
+        src: src, filename: file.name, alt: file.name,
+        display: (canThumb && big) ? 'thumb' : 'full', size: THUMB_DEFAULT, attId: null, uploading: true
+      }
+    }).run();
+    editor.chain().focus().insertContent(' ').run();
+    return src;
+  });
+}
+
+// Obrázky s daným menom súboru v editore → [{ node, pos }]. Clipboard mená majú náhodnú príponu.
+function findImages(editor, filename) {
+  var found = [];
+  editor.state.doc.descendants(function (node, pos) {
+    if (node.type.name === 'image' && node.attrs.filename === filename) found.push({ node: node, pos: pos });
+  });
+  return found;
+}
+
+function finishImage(editor, att, src) {
+  rememberPreview(att.id, src);
+  var tr = editor.state.tr;
+  findImages(editor, att.filename).forEach(function (hit) {
+    tr.setNodeMarkup(hit.pos, null, Object.assign({}, hit.node.attrs, { attId: att.id || null, uploading: false }));
+  });
+  if (tr.docChanged) editor.view.dispatch(tr);
+}
+
+function dropImage(editor, filename) {
+  var tr = editor.state.tr;
+  findImages(editor, filename).reverse().forEach(function (hit) {
+    tr.delete(hit.pos, hit.pos + hit.node.nodeSize);
+  });
+  if (tr.docChanged) editor.view.dispatch(tr);
 }
 
 export function handleFiles(editor, files) {
@@ -253,10 +340,18 @@ export function handleFiles(editor, files) {
     // Počítadlo drží cez CELÝ cyklus, teda aj cez vloženie referencie do textu, nielen cez POST.
     // Vnorené počítanie s `uploadAndAttach` nevadí — je to počítadlo, nie prepínač.
     uploadBegin();
+    var shown = isImage({ filename: file.name, contentType: file.type }) ? showImage(editor, file) : Promise.resolve(null);
     uploadAndAttach(editor, file).then(function (att) {
-      return insertRef(editor, att, file);
+      return shown.then(function (src) {
+        if (src) finishImage(editor, att, src); else return insertRef(editor, att, file);
+      }).then(function () { trackUpload(editor, att); });
     }).catch(function (e) {
       if (window.console) console.error('[rich_editor] upload failed:', e);
+      return shown.then(function (src) {
+        if (!src) return;
+        dropImage(editor, file.name);
+        editorNotice(editor, ((window.RE_CONFIG || {}).i18n || {}).linkFailed || 'Upload failed');
+      });
     }).then(uploadEnd, uploadEnd);
   });
 }

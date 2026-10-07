@@ -139,6 +139,13 @@ export var ReImage = Image.extend({
         },
         renderHTML: function (attrs) { return { 'data-re-size': attrs.size || THUMB_DEFAULT }; }
       },
+      // Kým sa čerstvo vložený obrázok nahráva (attachments.js `showImage`). Len v editore —
+      // do Markdownu nejde a z HTML sa neprevezme (skopírovaný obrázok sa už nenahráva).
+      uploading: {
+        default: false,
+        parseHTML: function () { return false; },
+        renderHTML: function (attrs) { return attrs.uploading ? { 'data-re-uploading': '' } : {}; }
+      },
       // Id prílohy — potrebné, keď sa obrázok prepne na režim „len odkaz" (postaví sa z neho
       // trvalá URL). Do Markdownu NEIDE, je to len pomocná informácia v editore.
       attId: {
