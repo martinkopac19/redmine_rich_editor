@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.18.2
+
+**An image switched to "Link only" is attached again.** 0.18.1 disabled the hidden upload fields of
+any file no longer found in the editor, but it only looked for the image node and `attachment:name`
+text. "Link only" replaces the image with a link to `/attachments/<id>`, so the upload was treated
+as deleted and never attached: the link led to an attachment without a container, visible only to
+its author; everyone else got 403 (#57686, note-5).
+
+- `referenced` in `attachments.js` also counts a link to the upload's attachment page.
+- `extra/paste_image_feedback_cdp_test.mjs` covers it (fails on 0.18.1).
+
 ## 0.18.1
 
 **A pasted image that was deleted from the editor is no longer attached.** The upload starts the
