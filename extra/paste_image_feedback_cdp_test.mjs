@@ -122,6 +122,20 @@ const again = await state();
 check('po opätovnom vložení je v editore jeden obrázok', again.imgs, 1);
 check('pripojí sa len jedna príloha', again.active, 1);
 
+console.log('4) obrázok prepnutý na „Len odkaz" sa pripojí (#57686: odkaz viedol na nepripojenú prílohu → 403)');
+await ev(`(function(){var ed=${ED}, pos=-1; ed.state.doc.descendants(function(n,p){ if(n.type.name==='image') pos=p; });
+  ed.chain().focus().setNodeSelection(pos).run(); return pos;})()`);
+await waitFor(`!!document.querySelector('.re-bubble[style*="flex"] [data-re-act="img-link"]')`, 'lista obrazka');
+await ev(`document.querySelector('.re-bubble[style*="flex"] [data-re-act="img-link"]').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true})), true`);
+await sleep(400);
+const linked = await state();
+const href = await ev(`(function(){var a=${PM}.querySelector('a[href*="/attachments/"]'); return a ? a.getAttribute('href') : null;})()`);
+check('obrázok sa zmenil na odkaz', [linked.imgs, /\/attachments\/\d+$/.test(href || '')], [0, true]);
+check('príloha odkazu sa pri odoslaní pripojí', linked.active, 1);
+await ev(`${ED}.commands.clearContent(true), true`);
+await sleep(300);
+check('po zmazaní odkazu sa príloha nepripojí', (await state()).active, 0);
+
 // upratanie: prázdny editor, žiadny koncept
 await send('Fetch.disable');
 await clearDraft(); await sleep(1500); await clearDraft();

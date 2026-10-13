@@ -193,20 +193,28 @@ function trackUpload(editor, att) {
   syncAttachFields(editor);
 }
 
-// Je súbor v editore ešte použitý? Obrázok podľa mena, iný súbor ako text `attachment:meno`.
-function referenced(editor, filename) {
+// Je súbor v editore ešte použitý? Obrázok podľa mena, iný súbor ako text `attachment:meno`,
+// obrázok prepnutý na „Len odkaz" (bubble.js `toLink`) ako odkaz na `/attachments/<id>` (#57686).
+function linksTo(node, id) {
+  return !!id && node.marks.some(function (m) {
+    var hit = m.type.name === 'link' && /\/attachments\/(?:download\/)?(\d+)/.exec(m.attrs.href || '');
+    return hit && hit[1] === String(id);
+  });
+}
+
+function referenced(editor, att) {
   var hit = false;
   editor.state.doc.descendants(function (node) {
     if (hit) return false;
-    if (node.type.name === 'image' && node.attrs.filename === filename) hit = true;
-    else if (node.isText && node.text.indexOf('attachment:' + filename) !== -1) hit = true;
+    if (node.type.name === 'image' && node.attrs.filename === att.filename) hit = true;
+    else if (node.isText && (node.text.indexOf('attachment:' + att.filename) !== -1 || linksTo(node, att.id))) hit = true;
   });
   return hit;
 }
 
 function syncAttachFields(editor) {
   (editor.__reTracked || []).forEach(function (att) {
-    var off = !referenced(editor, att.filename);
+    var off = !referenced(editor, att);
     att.inputs.forEach(function (input) { input.disabled = off; });
   });
 }
