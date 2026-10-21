@@ -172,6 +172,76 @@ var BUSY_MAX = 30000; // ...ale nie donekonečna, nech zaseknutý upload nezablo
 var SAVERS = [];
 var nativeSubmitting = false;
 
+/* PREKLAD PREHLIADAČA (#57890). Automatický preklad v Chrome prepíše text priamo v DOM —
+   aj v editovateľnom názve a v popise. Pre nás to vyzeralo ako úprava: pri odchode zo stránky
+   alebo kliknutí do poľa sa preložený text uložil pod menom toho, kto mal preklad zapnutý,
+   a všetci ostatní videli úlohu v jeho jazyku.
+
+   Riešenie: editovateľný názov a editor popisu majú `translate="no"` — prehliadač ich nikdy
+   neprepíše. Keď je stránka preložená (Chrome dá na <html> triedu `translated-ltr/-rtl`),
+   ukáže sa namiesto nich kópia len na čítanie, ktorú prehliadač preloží. Kliknutím do nej sa
+   zapne úprava s pôvodným textom; po odchode z poľa sa vráti preložená kópia.
+   Bez prekladu sa nemení nič. */
+function pageTranslated() { return /\btranslated-(ltr|rtl)\b/.test(document.documentElement.className); }
+
+var ON_TRANSLATE = []; // fn(isTranslated) — prepnutie medzi editorom a preloženou kópiou
+
+function watchTranslation() {
+  if (window.__reTranslateWatch) return;
+  window.__reTranslateWatch = 1;
+  var last = false;
+  function check() {
+    var now = pageTranslated();
+    if (now === last) return;
+    last = now;
+    ON_TRANSLATE.forEach(function (fn) { try { fn(now); } catch (e) {} });
+  }
+  new MutationObserver(check).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  check();
+}
+
+function noTranslate(el) {
+  el.setAttribute('translate', 'no');
+  el.classList.add('notranslate'); // starší Google Translate pozná len triedu
+}
+
+/* Poistka pre prekladače, ktoré `translate="no"` nerešpektujú: <font> v editore (vkladá ho
+   Google Translate; náš editor ani Redmine ho nikdy nevytvoria) → názov a popis sa až do
+   obnovenia stránky neukladajú a nedajú upravovať, s upozornením. Až do reloadu preto, že
+   editor popisu si preložený text medzitým prevzal do svojho obsahu. */
+var translated = false;
+var ON_TRANSLATED = [];
+
+function markTranslated() {
+  if (translated) return;
+  translated = true;
+  SAVERS.forEach(function (s) { try { s.cancel(); } catch (e) {} });
+  ON_TRANSLATED.forEach(function (fn) { try { fn(); } catch (e) {} });
+  // nad rámik úlohy, nie do neho — vnútri by sa prekrýval s plávajúcim avatarom autora
+  var anchor = document.querySelector('#content div.issue') || document.querySelector('.subject');
+  if (anchor && !document.querySelector('.re-translated-note')) {
+    var note = document.createElement('div');
+    note.className = 'flash warning re-translated-note';
+    note.setAttribute('translate', 'no');
+    note.textContent = ((window.RE_CONFIG || {}).i18n || {}).translatedNote ||
+      'The page is translated by the browser. Subject and description are not saved — turn off translation and reload the page to edit them.';
+    anchor.parentNode.insertBefore(note, anchor);
+  }
+}
+
+function watchFontTags(el) {
+  new MutationObserver(function (records) {
+    if (translated) return;
+    for (var i = 0; i < records.length; i++) {
+      var added = records[i].addedNodes;
+      for (var j = 0; j < added.length; j++) {
+        var n = added[j];
+        if (n.nodeName === 'FONT' || (n.querySelector && n.querySelector('font'))) { markTranslated(); return; }
+      }
+    }
+  }).observe(el, { childList: true, subtree: true });
+}
+
 /* Naša vlastná UI nie je „odchod z poľa". Bublinové lišty používajú mousedown+preventDefault
    (editor neblurne), ale dialóg odkazu si fokus berie naozaj — uprostred vkladania odkazu
    sa ukladať nemá. */
@@ -213,6 +283,7 @@ function autosaver(getFields, ind) {
 
   function run() {
     timer = null;
+    if (translated) return;                  // preložený text nie je úprava používateľa
     if (saving) return;                      // po dobehnutí POSTu sa `dirty()` prekontroluje samo
     if (!dirty()) { busySince = 0; return; } // NIČ SA NEZMENILO → neposielaj nič
 
@@ -254,9 +325,11 @@ function autosaver(getFields, ind) {
     onFocus: function () { if (dirty()) arm(IDLE_MS); else cancel(); },
     cancel: cancel,
     dirty: dirty,
+    saved: function () { try { return JSON.parse(lastSaved); } catch (e) { return null; } },
     /* Posledná záchrana pri odchode zo stránky. Vracia false, ak sa nepodarilo odoslať. */
     flush: function () {
       cancel();
+      if (translated) return true;         // preložený text neukladať ani pri odchode
       if (nativeSubmitting) return true;   // natívny submit nesie hodnoty sám
       if (saving || !dirty()) return true; // bežiaci POST už na serveri je
       var fields = getFields();
@@ -353,6 +426,29 @@ export function liveTitle() {
 
   var saver = autosaver(function () { return { subject: readTitle() }; }, ind);
   registerExitFlush();
+  ON_TRANSLATED.push(function () { el.setAttribute('contenteditable', 'false'); });
+  watchFontTags(el);
+
+  // preklad: prehliadač prekladá len kópiu `view`, upravuje sa po kliknutí v `el`
+  noTranslate(el);
+  var view = document.createElement('h3');
+  view.className = 're-title-view';
+  view.style.display = 'none';
+  el.parentNode.insertBefore(view, el);
+  function showView(on) {
+    if (on) view.textContent = readTitle();
+    view.style.display = on ? '' : 'none';
+    el.style.display = on ? 'none' : '';
+  }
+  view.addEventListener('click', function () {
+    showView(false);
+    el.focus();
+    document.getSelection().selectAllChildren(el);
+    document.getSelection().collapseToEnd();
+  });
+  el.addEventListener('blur', function () { if (pageTranslated()) showView(true); });
+  ON_TRANSLATE.push(showView);
+  watchTranslation();
   el.addEventListener('input', function () {
     if (subjInput) subjInput.value = readTitle();
     saver.idle();
@@ -402,6 +498,50 @@ export function liveDescription(editor, textarea) {
   var ind = makeIndicator(wrapper);
   var saver = autosaver(function () { return { description: textarea.value }; }, ind);
   registerExitFlush();
+  ON_TRANSLATED.push(function () { editor.setEditable(false); });
+  /* Editor zapisuje svoj obsah do textarey formulára — po preklade by natívne „Potvrdiť"
+     (napr. zmena stavu v Upraviť) poslalo preložený popis. Pred odoslaním vráť uložený. */
+  var form = issueForm();
+  if (form) {
+    form.addEventListener('submit', function () {
+      var kept = translated && saver.saved();
+      if (!kept) return;
+      form.querySelectorAll('textarea[name="issue[description]"]').forEach(function (t) { t.value = kept.description; });
+    }, true);
+  }
+  watchFontTags(wrapper);
+
+  // preklad: prehliadač prekladá len kópiu `view` (zhodný vzhľad — kópia DOM editora),
+  // upravuje sa po kliknutí v editore; kurzor skončí približne tam, kam sa kliklo
+  noTranslate(wrapper);
+  var view = document.createElement('div');
+  view.className = wrapper.className + ' re-desc-view';
+  view.style.display = 'none';
+  wrapper.parentNode.insertBefore(view, wrapper);
+  function showView(on) {
+    if (on) {
+      var pm = editor.view.dom.cloneNode(true);
+      pm.removeAttribute('contenteditable');
+      pm.removeAttribute('translate');
+      pm.classList.remove('notranslate');
+      view.replaceChildren(pm);
+    }
+    view.style.display = on ? '' : 'none';
+    wrapper.style.display = on ? 'none' : '';
+  }
+  view.addEventListener('click', function (e) {
+    if (e.target.closest('a')) return; // odkaz v preloženom popise sa otvorí ako odkaz
+    showView(false);
+    var hit = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+    editor.commands.focus(hit ? hit.pos : 'end');
+  });
+  editor.on('blur', function () {
+    setTimeout(function () {
+      if (pageTranslated() && !inEditorChrome(document.activeElement) && !editor.isFocused) showView(true);
+    }, BLUR_MS);
+  });
+  ON_TRANSLATE.push(showView);
+  watchTranslation();
   editor.on('update', function () { saver.idle(); });
   editor.on('blur', function () { saver.onBlur(); });
   editor.on('focus', function () { saver.onFocus(); });

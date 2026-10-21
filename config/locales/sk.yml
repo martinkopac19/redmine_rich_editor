@@ -29,6 +29,7 @@ sk:
   re_link_file: "Vybrať súbor…"
   re_link_uploading: "Nahrávam…"
   re_link_failed: "Nahranie zlyhalo"
+  re_translated_note: "Stránka je preložená prehliadačom. Názov a popis sa neukladajú — na úpravu vypni preklad a obnov stránku."
   re_cancel: "Zrušiť"
   re_as_image: "Zobraziť ako obrázok"
   re_open_link: "Otvoriť"

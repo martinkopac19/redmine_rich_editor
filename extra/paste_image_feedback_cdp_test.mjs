@@ -44,6 +44,7 @@ function check(label, got, want) {
 }
 
 await send('Page.enable');
+await send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 1000, deviceScaleFactor: 1, mobile: false });
 await nav(BASE + '/login');
 if (await ev('!!document.getElementById("username")')) {
   await ev(`document.getElementById('username').value=${JSON.stringify(LOGIN)};document.getElementById('password').value=${JSON.stringify(PASS)};document.querySelector('#login-form form').submit();true`);

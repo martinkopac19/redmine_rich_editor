@@ -29,6 +29,7 @@ pl:
   re_link_file: "Wybierz plik…"
   re_link_uploading: "Wysyłanie…"
   re_link_failed: "Wysyłanie nie powiodło się"
+  re_translated_note: "Strona jest przetłumaczona przez przeglądarkę. Temat i opis nie są zapisywane — aby je edytować, wyłącz tłumaczenie i odśwież stronę."
   re_cancel: "Anuluj"
   re_as_image: "Pokaż jako obraz"
   re_open_link: "Otwórz"

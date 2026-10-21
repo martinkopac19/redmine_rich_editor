@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.18.3
+
+**Browser translation no longer saves translated subject and description.** Chrome's automatic
+translation rewrites the page text in place, including the inline-editable subject and the live
+description editor. The editor took it for an edit and saved it on leaving the page or clicking
+into the field, under the name of whoever had translation on (#57890: an English subject became
+Czech for everyone).
+
+- The editable subject and the description editor are marked `translate="no"` (+ `notranslate`),
+  so the browser never rewrites them.
+- When the page is translated (Chrome puts `translated-ltr/-rtl` on `<html>`), a read-only copy of
+  the subject and of the description is shown instead, and the browser translates that copy.
+  Clicking it switches to editing with the original text; leaving the field shows the translated
+  copy again. Without translation nothing changes.
+- Safety net for translators that ignore `translate="no"`: a `<font>` element inside the editor
+  stops saving of subject and description until reload, with a notice; the native form submit then
+  sends the last saved description.
+- `extra/translate_guard_cdp_test.mjs` (the description case fails on 0.18.2).
+
 ## 0.18.2
 
 **An image switched to "Link only" is attached again.** 0.18.1 disabled the hidden upload fields of

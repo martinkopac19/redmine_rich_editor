@@ -29,6 +29,7 @@ hu:
   re_link_file: "Fájl kiválasztása…"
   re_link_uploading: "Feltöltés…"
   re_link_failed: "A feltöltés sikertelen"
+  re_translated_note: "Az oldalt a böngésző lefordította. A tárgy és a leírás nem kerül mentésre — a szerkesztéshez kapcsold ki a fordítást, és töltsd újra az oldalt."
   re_cancel: "Mégse"
   re_as_image: "Megjelenítés képként"
   re_open_link: "Megnyitás"

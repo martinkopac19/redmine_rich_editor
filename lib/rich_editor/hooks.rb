@@ -56,7 +56,9 @@ module RichEditor
           editLink: ::I18n.t(:re_edit_link),
           # zaškrtnutie checkboxu v uloženom komentári
           taskFailed: ::I18n.t(:re_task_failed),
-          taskStale: ::I18n.t(:re_task_stale)
+          taskStale: ::I18n.t(:re_task_stale),
+          # stránka preložená prehliadačom → názov a popis sa neukladajú (live.js)
+          translatedNote: ::I18n.t(:re_translated_note)
         }
       }
       out = +''

@@ -29,6 +29,7 @@ en:
   re_link_file: "Choose file…"
   re_link_uploading: "Uploading…"
   re_link_failed: "Upload failed"
+  re_translated_note: "The page is translated by the browser. Subject and description are not saved — turn off translation and reload the page to edit them."
   re_cancel: "Cancel"
   re_as_image: "Show as image"
   re_open_link: "Open"

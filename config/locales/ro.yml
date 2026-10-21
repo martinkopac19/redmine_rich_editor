@@ -29,6 +29,7 @@ ro:
   re_link_file: "Alege fișierul…"
   re_link_uploading: "Se încarcă…"
   re_link_failed: "Încărcarea a eșuat"
+  re_translated_note: "Pagina este tradusă de browser. Subiectul și descrierea nu se salvează — pentru a le edita, dezactivează traducerea și reîncarcă pagina."
   re_cancel: "Anulează"
   re_as_image: "Afișează ca imagine"
   re_open_link: "Deschide"
