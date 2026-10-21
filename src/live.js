@@ -458,6 +458,24 @@ export function liveTitle() {
   el.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
   });
+  /* Vloženie zo schránky / pretiahnutie: len čistý text. Prehliadač by do contenteditable vložil
+     aj formátovanie zdroja (napr. sivú kurzívu z názvu rodičovskej úlohy) — server ukladá text,
+     takže to zmizlo až po obnovení stránky. Riadky → medzery, názov je jednoriadkový. */
+  function insertPlain(e, data) {
+    if (!data) return;
+    e.preventDefault();
+    var text = (data.getData('text/plain') || '').replace(/\s+/g, ' ');
+    if (text) document.execCommand('insertText', false, text);
+  }
+  el.addEventListener('paste', function (e) { insertPlain(e, e.clipboardData); });
+  el.addEventListener('drop', function (e) {
+    var d = e.dataTransfer;
+    if (!d) return;
+    e.preventDefault();
+    var range = document.caretRangeFromPoint && document.caretRangeFromPoint(e.clientX, e.clientY);
+    if (range) { var sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+    insertPlain(e, d);
+  });
 }
 
 // LIVE POPIS: editor (rich) presuň na miesto renderovaného popisu, schovaj rendered, auto-save.

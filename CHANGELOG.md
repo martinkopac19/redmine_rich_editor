@@ -18,6 +18,9 @@ Czech for everyone).
   stops saving of subject and description until reload, with a notice; the native form submit then
   sends the last saved description.
 - `extra/translate_guard_cdp_test.mjs` (the description case fails on 0.18.2).
+- **Pasting into the inline subject inserts plain text only.** The browser pasted the source's
+  formatting into the contenteditable heading (e.g. grey italics from the parent issue's subject),
+  visible until reload. Line breaks become spaces. `extra/title_paste_cdp_test.mjs`.
 
 ## 0.18.2
 
