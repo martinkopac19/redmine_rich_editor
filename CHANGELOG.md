@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.18.4
+
+**Typing after a link no longer extends the link.** The Link extension has `inclusive = autolink`,
+so everything typed right after a pasted URL went into the link — to continue in plain text one had
+to work around it with a new line and Backspace. Links are now not inclusive (like Google Docs or
+Notion); hand-typed URLs are still linked by autolink.
+
+- Exception: the label inserted by the link dialog or by "Link only" on an image is selected and
+  meant to be overtyped. It stays a link while typing over it and right after it, until the cursor
+  is moved (arrows, Home/End, Enter, click, leaving the editor).
+- `extra/link_typing_cdp_test.mjs` (4 checks fail on 0.18.3).
+
 ## 0.18.3
 
 **Browser translation no longer saves translated subject and description.** Chrome's automatic

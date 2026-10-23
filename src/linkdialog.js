@@ -8,6 +8,7 @@
 
    Keď je pred otvorením označený text, odkaz sa naň naviaže. Keď nie je, vloží sa popisok
    (defaultne „screenshot") a rovno sa OZNAČÍ, takže ho používateľ prepíše písaním. */
+import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { uploadAndAttach, attachmentPageUrl, clipboardName } from './attachments.js';
 
 var I = (window.RE_CONFIG || {}).i18n || {};
@@ -27,9 +28,51 @@ export function insertLinkedLabel(editor, href, label) {
     .command(function (p) {
       var mark = p.state.schema.marks.link;
       if (mark) p.tr.setStoredMarks([mark.create({ href: href })]);
+      p.tr.setMeta(STICKY_LABEL, href);
       return true;
     })
     .run();
+}
+
+/* Odkaz nie je `inclusive` (editor.js) — text napísaný hneď za ním do neho nepatrí. Výnimka je
+   práve vložený popisok, ktorý sa prepisuje písaním: storedMarks zruší už `focus()` (nastaví
+   výber), takže by sa písalo mimo odkazu. Kým človek nepohne kurzorom sám (šípky, klik, odchod
+   z editora), písanie cez popisok a hneď za ním preto ostáva v odkaze s týmto href. */
+var STICKY_LABEL = new PluginKey('reStickyLabel');
+var MOVE_KEYS = /^(ArrowLeft|ArrowRight|ArrowUp|ArrowDown|Home|End|PageUp|PageDown|Escape|Enter|Tab)$/;
+
+export function stickyLabelPlugin(type) {
+  function clear(view) {
+    if (STICKY_LABEL.getState(view.state)) view.dispatch(view.state.tr.setMeta(STICKY_LABEL, null));
+    return false;
+  }
+  return new Plugin({
+    key: STICKY_LABEL,
+    state: {
+      init: function () { return null; },
+      apply: function (tr, href) {
+        var meta = tr.getMeta(STICKY_LABEL);
+        return meta !== undefined ? meta : href;
+      }
+    },
+    props: {
+      handleDOMEvents: {
+        keydown: function (view, ev) { return MOVE_KEYS.test(ev.key) ? clear(view) : false; },
+        mousedown: clear,
+        blur: clear
+      },
+      handleTextInput: function (view, from, to, text) {
+        var href = STICKY_LABEL.getState(view.state);
+        if (!href) return false;
+        var $from = view.state.doc.resolve(from);
+        var node = from < to ? $from.nodeAfter : $from.nodeBefore;
+        var mark = node && type.isInSet(node.marks);
+        if (!mark || mark.attrs.href !== href) return false;
+        view.dispatch(view.state.tr.insertText(text, from, to).addMark(from, from + text.length, mark));
+        return true;
+      }
+    }
+  });
 }
 
 /* Výber si pamätáme od otvorenia dialógu, ale medzitým sa dokument mohol zmeniť (upload trvá

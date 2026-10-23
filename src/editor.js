@@ -19,7 +19,7 @@ import { SlashCommand } from './slash.js';
 import { IssueSuggest, EmojiSuggest, MentionSuggest } from './tokens.js';
 import { EmoticonRules } from './emoticons.js';
 import { attachBubble } from './bubble.js';
-import { openLinkDialog } from './linkdialog.js';
+import { openLinkDialog, stickyLabelPlugin } from './linkdialog.js';
 import { handleFiles, openFilePicker, renameClipboardFiles } from './attachments.js';
 import { liveDescription, liveTitle, liveComments, keepLastTabCookie, draftNewIssue, adoptDescription } from './live.js';
 import { dedupeThumbnails } from './dedupe.js';
@@ -70,8 +70,15 @@ var LinkShortcut = Extension.create({
    sám, markdown-it bez linkify ich nechá ako text → v živom popise neboli klikateľné.
    Linkify zapíname len pre `http://` a `https://` (bez fuzzy `booking.com`, mailto, ftp, `//`),
    aby editor nerobil odkazy tam, kde ich Redmine nerobí. Dáta sa nemenia; pri ďalšej úprave
-   textu sa holá URL uloží ako `<url>` (Redmine ju vyrenderuje rovnako). */
+   textu sa holá URL uloží ako `<url>` (Redmine ju vyrenderuje rovnako).
+
+   `inclusive: false`: rozšírenie má `inclusive = autolink`, takže všetko napísané hneď za
+   vloženou URL padalo do odkazu. Teraz za odkazom píše obyčajný text (ako Google Docs/Notion). */
 var ReLink = Link.extend({
+  inclusive: function () { return false; },
+  addProseMirrorPlugins: function () {
+    return ((this.parent && this.parent()) || []).concat([stickyLabelPlugin(this.type)]);
+  },
   addStorage: function () {
     var parent = (this.parent && this.parent()) || {};
     return Object.assign({}, parent, {
