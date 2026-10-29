@@ -138,9 +138,11 @@ function swapHistory(html) {
   ch.innerHTML = nh.innerHTML;
   /* Klikáme VŽDY, aj keď server vyrenderoval ten istý tab: triedu `selected` síce prinesie HTML,
      ale journaly filtruje až `showIssueHistory` a inline <script> z tabs partialu sa po nastavení
-     innerHTML nespustí. Klik je idempotentný a fokus nepresúva. */
+     innerHTML nespustí. Klik je idempotentný a fokus nepresúva.
+     Prvý komentár v úlohe: predtým žiadne taby neboli → klikne sa na tab, ktorý vybral server.
+     Inak pri predvolenom tabe „Poznámky" ostal `#tab-content-history` skrytý (display:none). */
   try {
-    var link = prevTabId ? ch.querySelector('#' + prevTabId) : null;
+    var link = prevTabId ? ch.querySelector('#' + prevTabId) : ch.querySelector('.tabs a.selected');
     if (link) link.click();
   } catch (e) {}
   return true;

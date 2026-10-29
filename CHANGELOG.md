@@ -12,6 +12,12 @@ Notion); hand-typed URLs are still linked by autolink.
   is moved (arrows, Home/End, Enter, click, leaving the editor).
 - `extra/link_typing_cdp_test.mjs` (4 checks fail on 0.18.3).
 
+**The first comment on an issue shows up without reload.** With the history default tab set to
+"Notes", Redmine renders `#tab-content-history` hidden and reveals it by an inline script, which does
+not run when the history is swapped in after "Add comment". The swap re-clicks the previously open
+tab, but an issue without comments has no tabs, so the comment stayed hidden until reload (#58157).
+Now the tab selected by the server is clicked. `extra/first_comment_cdp_test.mjs` (fails on 0.18.3).
+
 ## 0.18.3
 
 **Browser translation no longer saves translated subject and description.** Chrome's automatic
